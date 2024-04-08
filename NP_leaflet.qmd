@@ -12,14 +12,12 @@ library(tidyverse)
 library(leaflet)
 nps <- sf::read_sf("/Users/denalistevens/Desktop/Spring 2024/SYE/SYE/NPS_shape/nps_boundary.shp") |>
   sf::st_transform('+proj=longlat +datum=WGS84')
-# look for list of some sort of websites for all parks
-  # or scrape and pull from wiki, but ideal I want from national park service
-
 
 p_names <- nps|>
   mutate(popup = paste0('<a href =', nps$METADATA, '>',
                         nps$UNIT_NAME, '</a>'))
 
+nps |> select(UNIT_NAME) |> arrange(UNIT_NAME)
 
 leaflet(nps) |>
   setView(lng = -98.583, lat = 39.833, zoom = 5) |>
@@ -34,10 +32,38 @@ leaflet(nps) |>
       bringToFront = TRUE),
               popup = p_names$popup)
 
+# change so when name is clicked on, a table appears below the map displaying information about the park that's been clicked 
+```
 
-# change so name pops up when hovered over, and more information/link appear when clicked on 
+Scrape wiki page of national parks to get the data for map
+ - maybe use inner join so the map only shows the parks I have data on? 
+ 
+```{r}
+library(rvest)
+
+url <- "https://en.wikipedia.org/wiki/List_of_national_parks_of_the_United_States"
+
+h <- read_html(url)
+
+tab <- h |> html_nodes("table")
+
+wiki_data <- tab[[1]] |> html_table()
 
 ```
 
+If I chose to inner_join and only display true national parks then I will have significantly less data in my map
+```{r}
+inner_join(nps, wiki_data, by = str_detect(Name %in% UNIT_NAME))
+
+# str remove "National Park", "National Monument", "Historical Park". . 
+nps2 <- nps |> arrange(UNIT_NAME)
+
+nps_names <- nps2$UNIT_NAME
+
+clean_names <- str_remove(nps_names, " National Park")
+
+```
+
+ 
 
 
