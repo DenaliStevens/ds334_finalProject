@@ -1,0 +1,45 @@
+---
+title: "NP_leaflet"
+format: html
+---
+
+https://public-nps.opendata.arcgis.com/datasets/nps::nps-boundary-4/explore?location=37.015375%2C-81.906543%2C6.00
+
+```{r}
+library(sf)
+library(sfnetworks)
+library(here)
+library(tidyverse)
+library(leaflet)
+nps <- sf::read_sf("/Users/denalistevens/Desktop/Spring 2024/SYE/SYE/NPS_shape/nps_boundary.shp") |>
+  sf::st_transform('+proj=longlat +datum=WGS84')
+# look for list of some sort of websites for all parks
+  # or scrape and pull from wiki, but ideal I want from national park service
+
+  
+
+p_names <- nps|>
+  mutate(popup = paste0('<a href =', nps$METADATA, '>',
+                        nps$UNIT_NAME, '</a>'))
+
+
+leaflet(nps) |>
+  setView(lng = -98.583, lat = 39.833, zoom = 5) |>
+  addTiles() |>
+  addProviderTiles(providers$OpenStreetMap.Mapnik) |>
+  addPolygons(color = "#006600",
+              weight = 1.5,
+              smoothFactor = .5,
+              opacity = 1.0, 
+              fillOpacity = 0.5,
+              highlightOptions = highlightOptions(color = "#003300", weight = 2,
+      bringToFront = TRUE),
+              popup = p_names$popup)
+
+
+# change so name pops up when hovered over, and more information/link appear when clicked on 
+
+```
+
+
+
