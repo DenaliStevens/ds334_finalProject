@@ -7,7 +7,6 @@ https://public-nps.opendata.arcgis.com/datasets/nps::nps-boundary-4/explore?loca
 
 ```{r}
 library(sf)
-library(sfnetworks)
 library(here)
 library(tidyverse)
 library(leaflet)
@@ -16,7 +15,6 @@ nps <- sf::read_sf("/Users/denalistevens/Desktop/Spring 2024/SYE/SYE/NPS_shape/n
 # look for list of some sort of websites for all parks
   # or scrape and pull from wiki, but ideal I want from national park service
 
-  
 
 p_names <- nps|>
   mutate(popup = paste0('<a href =', nps$METADATA, '>',
