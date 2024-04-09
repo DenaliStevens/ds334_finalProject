@@ -18,7 +18,9 @@ p_names <- nps|>
                         nps$UNIT_NAME, '</a>'))
 
 nps |> select(UNIT_NAME) |> arrange(UNIT_NAME)
+```
 
+```{r}
 leaflet(nps) |>
   setView(lng = -98.583, lat = 39.833, zoom = 5) |>
   addTiles() |>
@@ -49,15 +51,21 @@ tab <- h |> html_nodes("table")
 
 wiki_np_data <- tab[[1]] |> html_table()
 
-view(wiki_np_data)
 
+# clean to get rid of everything that's not a number or letter
+# use a str_remove to get rid of anything not alpha-numeric 
+
+library(stringr)
+
+wiki_np_clean <- wiki_np_data |> mutate(wiki_name = str_replace_all(Name, "[^[:alnum:]]", " ")) |>
+  relocate(wiki_name)
 
 # just color code the ones that I have more information available for
 ```
 
 If I chose to inner_join and only display true national parks then I will have significantly less data in my map, maybe I'll just color code them? like green for parks you can click on for more  information and red for less significant ones? unless I can find more information 
 ```{r}
-inner_join(nps, wiki_data, by = str_detect(Name %in% UNIT_NAME))
+# inner_join(nps, wiki_data, by = str_detect(Name %in% UNIT_NAME))
 
 # str remove "National Park", "National Monument", "Historical Park". . 
 nps2 <- nps |> arrange(UNIT_NAME)
@@ -67,23 +75,60 @@ nps_names <- nps2$UNIT_NAME
 nps_1 <- str_remove_all(nps_names, " National Park")
 nps_2 <- str_remove(nps_1, " Historical ")
 
- nps |> mutate(clean_name = str_remove_all(UNIT_NAME, " National") |>
+nps_clean <- nps |> mutate(nps_name = str_remove_all(UNIT_NAME, " National") |>
                  str_remove_all(" Historical Site") |> 
                  str_remove_all( " Historical Park") |>
-                 str_remove_all( " Historical Trail")) |> 
+                 str_remove_all( " Historical Trail") |>
+                 str_remove_all( " Park")) |>
+  relocate(nps_name) |>
+  view()
                 
-  select(clean_name)
 
 # trim for whitespace
 
-# use a str_remove to get rid of anything not alpha-numeric 
 # fuzzy joining or string distances (packages)
-
-
 
 ```
 
 Currently looking into using a fuzzy join instead - advice from Ramler 
+```{r}
+library(fuzzyjoin)
+
+wiki_np_clean |>
+  stringdist_inner_join(nps, by = c("wiki_name" = "UNIT_NAME"), max_dist = 5) |> 
+  relocate(UNIT_NAME)
+
+# this is very very wrong 
+# try it with the one I started to clean?
+
+joined1 <- wiki_np_clean |>
+  stringdist_inner_join(nps_clean, by = c("wiki_name" = "nps_name"), max_dist = 5) |>
+  relocate(wiki_name, nps_name) |>
+  view()
+
+# okay so there's some that are the correct match, can I just match them using an if statement?? 
+
+
+joined1 |> mutate(match = ifelse("wiki_name" == "nps_name",
+                                 true = "yes",
+                                 false = "no"))
+# WHYYYYY NO WORK
+
+# try removing whitespace first? 
+
+joined1 |> str_squish(wiki_name)
+
+# I want to find a way to keep all the rows that having matching names from nps and wiki, just to see where I'm at
+joined1 |> mutate(nps_names = str_squish(nps_name)) |> 
+  mutate(wiki_names = str_squish(wiki_name)) |>
+  mutate(match = ifelse("wiki_names" == "nps_names",
+                                 true = "yes",
+                                 false = "no"))
+
+# WHYYY
+
+```
+
  
 
 
