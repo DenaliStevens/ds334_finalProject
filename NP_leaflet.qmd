@@ -47,11 +47,15 @@ h <- read_html(url)
 
 tab <- h |> html_nodes("table")
 
-wiki_data <- tab[[1]] |> html_table()
+wiki_np_data <- tab[[1]] |> html_table()
 
+view(wiki_np_data)
+
+
+# just color code the ones that I have more information available for
 ```
 
-If I chose to inner_join and only display true national parks then I will have significantly less data in my map
+If I chose to inner_join and only display true national parks then I will have significantly less data in my map, maybe I'll just color code them? like green for parks you can click on for more  information and red for less significant ones? unless I can find more information 
 ```{r}
 inner_join(nps, wiki_data, by = str_detect(Name %in% UNIT_NAME))
 
@@ -60,10 +64,26 @@ nps2 <- nps |> arrange(UNIT_NAME)
 
 nps_names <- nps2$UNIT_NAME
 
-clean_names <- str_remove(nps_names, " National Park")
+nps_1 <- str_remove_all(nps_names, " National Park")
+nps_2 <- str_remove(nps_1, " Historical ")
+
+ nps |> mutate(clean_name = str_remove_all(UNIT_NAME, " National") |>
+                 str_remove_all(" Historical Site") |> 
+                 str_remove_all( " Historical Park") |>
+                 str_remove_all( " Historical Trail")) |> 
+                
+  select(clean_name)
+
+# trim for whitespace
+
+# use a str_remove to get rid of anything not alpha-numeric 
+# fuzzy joining or string distances (packages)
+
+
 
 ```
 
+Currently looking into using a fuzzy join instead - advice from Ramler 
  
 
 
