@@ -126,6 +126,8 @@ joined1 |> mutate(nps_names = str_squish(nps_name)) |>
                                  false = "no"))
 
 # WHYYY
+# I feel like I'm making a very dumb error and I'm very very annoyed 
+# love coding 
 
 ```
 
