@@ -104,10 +104,17 @@ joined1 <- wiki_np_clean |>
   stringdist_inner_join(nps_clean, by = c("wiki_name" = "nps_name"), max_dist = 3) |>
   relocate(wiki_name, nps_name) |>
   view()
+
+
 # row 22, Glacier Bay and Glacier 
 # missing American Samoa, New River Gorge, Wrangell St Elias
 
 # joined1 is the data set I need and the best i can do for now 
+
+joined2 <- nps_clean |>
+  stringdist_inner_join(wiki_np_clean, by = c("nps_name" = "wiki_name"), max_dist = 3) |>
+  relocate(wiki_name, nps_name) |>
+  view()
 ```
 
 
@@ -127,6 +134,29 @@ leaflet(joined1) |>
 
 # Is this not working bc of the file type? 
 # How do I fix that? Do I need to join a different way? 
+```
+
+```{r}
+names_2 <- joined2 |>
+  mutate(popup = paste0('<a href =', joined2$METADATA, '>',
+                        joined2$UNIT_NAME, '</a>'))
+
+p_names <- nps|>
+  mutate(popup = paste0('<a href =', nps$METADATA, '>',
+                        nps$UNIT_NAME, '</a>'))
+
+leaflet(joined2) |>
+  setView(lng = -98.583, lat = 39.833, zoom = 5) |>
+  addTiles() |>
+  addProviderTiles(providers$OpenStreetMap.Mapnik) |>
+  addPolygons(color = "#006600",
+              weight = 1.5,
+              smoothFactor = .5,
+              opacity = 1.0, 
+              fillOpacity = 0.5,
+              highlightOptions = highlightOptions(color = "#003300", weight = 2,
+      bringToFront = TRUE),
+              popup = names_2$popup)
 ```
 
 
