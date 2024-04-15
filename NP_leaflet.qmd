@@ -80,8 +80,7 @@ nps_clean <- nps |> mutate(nps_name = str_remove_all(UNIT_NAME, " National") |>
                  str_remove_all( " Historical Park") |>
                  str_remove_all( " Historical Trail") |>
                  str_remove_all( " Park")) |>
-  relocate(nps_name) |>
-  view()
+  relocate(nps_name)
                 
 
 # trim for whitespace
@@ -102,16 +101,68 @@ wiki_np_clean |>
 # try it with the one I started to clean?
 
 joined1 <- wiki_np_clean |>
-  stringdist_inner_join(nps_clean, by = c("wiki_name" = "nps_name"), max_dist = 5) |>
+  stringdist_inner_join(nps_clean, by = c("wiki_name" = "nps_name"), max_dist = 3) |>
   relocate(wiki_name, nps_name) |>
   view()
+# row 22, Glacier Bay and Glacier 
+# missing American Samoa, New River Gorge, Wrangell St Elias
+
+# joined1 is the data set I need and the best i can do for now 
+```
+
+
+```{r}
+leaflet(joined1) |>
+  setView(lng = -98.583, lat = 39.833, zoom = 5) |>
+  addTiles() |>
+  addProviderTiles(providers$OpenStreetMap.Mapnik) |>
+  addPolygons(color = "#006600",
+              weight = 1.5,
+              smoothFactor = .5,
+              opacity = 1.0, 
+              fillOpacity = 0.5,
+              highlightOptions = highlightOptions(color = "#003300", weight = 2,
+      bringToFront = TRUE),
+              popup = p_names$popup)
+
+# Is this not working bc of the file type? 
+# How do I fix that? Do I need to join a different way? 
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+## This is not really necissary but could be useful
 
 # okay so there's some that are the correct match, can I just match them using an if statement?? 
 
-
-joined1 |> mutate(match = ifelse("wiki_name" == "nps_name",
+joined1 |> mutate(match = if_else("wiki_name" == "nps_name",
                                  true = "yes",
-                                 false = "no"))
+                                 false = "no")) |>
+  relocate(match) |>
+  arrange(wiki_name) 
+# row 22, Glacier Bay and Glacier 
+# missing American Samoa, New River Gorge, Wrangell St Elias
+
 # WHYYYYY NO WORK
 
 # try removing whitespace first? 
@@ -121,16 +172,16 @@ joined1 |> str_squish(wiki_name)
 # I want to find a way to keep all the rows that having matching names from nps and wiki, just to see where I'm at
 joined1 |> mutate(nps_names = str_squish(nps_name)) |> 
   mutate(wiki_names = str_squish(wiki_name)) |>
-  mutate(match = ifelse("wiki_names" == "nps_names",
+  mutate(match = if_else("wiki_names" == "nps_names",
                                  true = "yes",
-                                 false = "no"))
+                                 false = "no")) |>
+  relocate(match)
 
 # WHYYY
 # I feel like I'm making a very dumb error and I'm very very annoyed 
 # love coding 
-
 ```
 
  
-
+ 
 
