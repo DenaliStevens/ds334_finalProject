@@ -10,6 +10,8 @@ library(sf)
 library(here)
 library(tidyverse)
 library(leaflet)
+# I downloaded the data from this website and used the shp file 
+# https://public-nps.opendata.arcgis.com/datasets/nps::nps-boundary-4/explore?location=37.015375%2C-81.906543%2C6.00
 nps <- sf::read_sf("/Users/denalistevens/Desktop/Spring 2024/SYE/SYE/NPS_shape/nps_boundary.shp") |>
   sf::st_transform('+proj=longlat +datum=WGS84')
 
@@ -141,9 +143,6 @@ names_2 <- joined2 |>
   mutate(popup = paste0('<a href =', joined2$METADATA, '>',
                         joined2$UNIT_NAME, '</a>'))
 
-p_names <- nps|>
-  mutate(popup = paste0('<a href =', nps$METADATA, '>',
-                        nps$UNIT_NAME, '</a>'))
 
 leaflet(joined2) |>
   setView(lng = -98.583, lat = 39.833, zoom = 5) |>
@@ -156,7 +155,54 @@ leaflet(joined2) |>
               fillOpacity = 0.5,
               highlightOptions = highlightOptions(color = "#003300", weight = 2,
       bringToFront = TRUE),
-              popup = names_2$popup)
+      popup = names_2$popup)
+```
+
+Okay this has gotten me to the point where I can now plot all of the parks I have the extended info from wiki for. Now I need to figure out have to have that information pop up when the park is clicked on. I also want just the park name to appear when the mouse hovers over it. 
+```{r}
+# for now just include all the information I want in the popup untill I can figure out a table 
+view(joined2)
+# going to need to rename some things in joined2
+
+joined_clean <- joined2 |> rename(Established = `Date established as park[12]`, Area = `Area (2023)[8]`, Visitors_2022 = `Recreation visitors (2022)[11]`) 
+
+joined_clean <- joined_clean |> mutate(popup = paste(
+  "Name: ", UNIT_NAME,
+  "Date of Establishment: ", Established,
+  "Visitors in 2022: ", Visitors_2022,
+  "Description of Park: ", Description))
+# need to learn how to format this 
+
+library(htmltools)
+library(glue)
+
+label_text <- glue(
+  "<b> Name: </b> {joined_clean$UNIT_NAME}<br/>",
+  "<b> Established: </b> {joined_clean$Established}<br/>",
+  "<b> Visitors in 2022: </b> {joined_clean$Visitors_2022}<br/>",
+  "<b> Description: </b> {joined_clean$Description}<br/>") |>
+  lapply(htmltools::HTML)
+  
+leaflet(joined_clean) |>
+  setView(lng = -110, lat = 39.833, zoom = 2.5) |>
+  addTiles() |>
+  addProviderTiles(providers$OpenStreetMap.Mapnik) |>
+  addPolygons(color = "#006600",
+              weight = 1.5,
+              smoothFactor = .5,
+              opacity = 1.0, 
+              fillOpacity = 0.5,
+              highlightOptions = highlightOptions(color = "#003300", weight = 2,
+      bringToFront = TRUE),
+      label = joined_clean$UNIT_NAME,
+      popup = label_text)
+
+## yay
+library(praise)
+print(praise())
+
+# okay now I need to decide if I want to include all of the parks from my origional data set and maybe color code the ones I have more information on? Or just include the ones I have the additional information for..
+## also why does all of this take so long to load? the map and the app 
 ```
 
 

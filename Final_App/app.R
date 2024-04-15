@@ -58,8 +58,8 @@ ui <- navbarPage("NavBar!",
 server <- function(input, output) {
 
     output$map1 <- renderLeaflet({
-      leaflet(nps) |>
-        setView(lng = -98.583, lat = 39.833, zoom = 5) |>
+      leaflet(joined_clean) |>
+        setView(lng = -110, lat = 39.833, zoom = 2.5) |>
         addTiles() |>
         addProviderTiles(providers$OpenStreetMap.Mapnik) |>
         addPolygons(color = "#006600",
@@ -69,7 +69,9 @@ server <- function(input, output) {
                     fillOpacity = 0.5,
                     highlightOptions = highlightOptions(color = "#003300", weight = 2,
                                                         bringToFront = TRUE),
-                    popup = p_names$popup)
+                    label = joined_clean$UNIT_NAME,
+                    popup = label_text)
+      
         
     })
     
