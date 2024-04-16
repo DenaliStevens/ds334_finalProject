@@ -10,11 +10,11 @@ library("readxl")
 GET("https://query.data.world/s/fr5k6pcrcweo7wr657vchbeq6f3cci?dws=00000", write_disk(tf <- tempfile(fileext = ".xlsx")))
 df <- read_excel(tf)
 df2 <- df |> filter(YearRaw >= "2000")
-
+just_np <- df |> filter(`Unit Type` == "National Park")
 
 
 # lets make a line plot of all of them, need to exclude the total from YearRaw 
-just_years <- df2 |> filter(YearRaw != "Total")
+just_years <- df |> filter(YearRaw != "Total")
 
 options(scipen = 999)
 library(scales)
@@ -48,4 +48,16 @@ ggplotly(plot2)
 ## I want to have a plot for every unit type 
 
 ```
+
+```{r}
+      ggplot(data = just_np, aes(x = YearRaw, y = Visitors, group = `Unit Name`)) +
+        geom_line(aes(color = `Unit Name`), show.legend = FALSE) +
+        scale_color_viridis_d() +
+        scale_y_continuous(labels = scales::comma) +
+        labs(title = "Visitors in National Parks from 2000 to 2016", subtitle = "Minimum visitors is set at 1,000,000") +
+        theme_minimal()
+
+                                         
+```
+
 

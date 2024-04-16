@@ -13,6 +13,7 @@ library(glue)
 library("httr")
 library("readxl")
 library(plotly)
+library(fuzzyjoin)
 options(scipen = 999)
 
 # Bring in data and manipulate 
@@ -60,7 +61,8 @@ label_text <- glue(
 GET("https://query.data.world/s/fr5k6pcrcweo7wr657vchbeq6f3cci?dws=00000", write_disk(tf <- tempfile(fileext = ".xlsx")))
 df <- read_excel(tf)
 df2 <- df |> filter(YearRaw >= "2000")
-just_years <- df2 |> filter(YearRaw != "Total")
+just_years <- df |> filter(YearRaw != "Total")
+just_np <- df |> filter(`Unit Type` == "National Park")
 national_parks <- df2 |> filter(`Unit Type` == "National Park")
 national_parks2 <- national_parks |> filter(YearRaw != "Total")
 national_parks3 <- national_parks |> filter(YearRaw != "Total") |> filter(Visitors >= 1000000)
@@ -87,10 +89,6 @@ ui <- navbarPage("NavBar!",
                                           max = 2016,
                                           value = c(2000, 2016)),
                               # need to find a way to get rid of commas so it looks like years
-                              selectInput("type_select", 
-                                          label = "Select Type to Graph",
-                                          choices = type,
-                                          selected = NULL),
                               sliderInput("min_visitors", 
                                           label = "Set a Minimum Amount of Visitors",
                                           min = 0,
@@ -98,7 +96,7 @@ ui <- navbarPage("NavBar!",
                                           value = 1000000),
                             ),
                               mainPanel(
-                                plotlyOutput("visitors_line")
+                                plotOutput("visitors_line")
                         
                               )
                             )
@@ -126,16 +124,16 @@ server <- function(input, output) {
         
     })
     
-    
-    output$visitors_line <- renderPlotly({
-      plot3 <- ggplot(data = df, aes(x = YearRaw, y = Visitors, group = .data[[input$type_select]])) +
-        geom_line(aes(colour = .data[[input$type_select]])) +
+    # this plot is really not working out 
+    # i need to figure out how to set years for a better min 
+    output$visitors_line <- renderPlot({
+      ggplot(data = just_np, aes(x = YearRaw, y = Visitors, group = `Unit Name`)) +
+        geom_line(aes(colour = `Unit Name`), show.legend = FALSE) +
         scale_color_viridis_d() +
         scale_y_continuous(labels = scales::comma) +
         labs(title = "Visitors in National Parks from 2000 to 2016", subtitle = "Minimum visitors is set at 1,000,000") +
         theme_minimal()
-      ggplotly(plot3)
-     
+      
     })
     
     
