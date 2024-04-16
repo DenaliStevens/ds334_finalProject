@@ -3,13 +3,12 @@ title: "Visitors Plots"
 format: html
 ---
 
-I want to have differnt tabs in my app. This tab is going to have visitors per park from 2000 - 2016, and I'm going to do a line graph 
+I want to have different tabs in my app. This tab is going to have visitors per park from 2000 - 2016, and I'm going to do a line graph 
 ```{r}
 library("httr")
 library("readxl")
 GET("https://query.data.world/s/fr5k6pcrcweo7wr657vchbeq6f3cci?dws=00000", write_disk(tf <- tempfile(fileext = ".xlsx")))
 df <- read_excel(tf)
-
 df2 <- df |> filter(YearRaw >= "2000")
 
 

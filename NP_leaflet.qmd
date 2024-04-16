@@ -104,8 +104,7 @@ wiki_np_clean |>
 
 joined1 <- wiki_np_clean |>
   stringdist_inner_join(nps_clean, by = c("wiki_name" = "nps_name"), max_dist = 3) |>
-  relocate(wiki_name, nps_name) |>
-  view()
+  relocate(wiki_name, nps_name)
 
 
 # row 22, Glacier Bay and Glacier 
@@ -115,8 +114,7 @@ joined1 <- wiki_np_clean |>
 
 joined2 <- nps_clean |>
   stringdist_inner_join(wiki_np_clean, by = c("nps_name" = "wiki_name"), max_dist = 3) |>
-  relocate(wiki_name, nps_name) |>
-  view()
+  relocate(wiki_name, nps_name)
 ```
 
 
@@ -161,7 +159,7 @@ leaflet(joined2) |>
 Okay this has gotten me to the point where I can now plot all of the parks I have the extended info from wiki for. Now I need to figure out have to have that information pop up when the park is clicked on. I also want just the park name to appear when the mouse hovers over it. 
 ```{r}
 # for now just include all the information I want in the popup untill I can figure out a table 
-view(joined2)
+
 # going to need to rename some things in joined2
 
 joined_clean <- joined2 |> rename(Established = `Date established as park[12]`, Area = `Area (2023)[8]`, Visitors_2022 = `Recreation visitors (2022)[11]`) 
