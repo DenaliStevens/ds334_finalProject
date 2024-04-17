@@ -123,11 +123,18 @@ server <- function(input, output) {
       
         
     })
+
+    
+    year_reactive <- reactive({
+      just_np_years <- just_np |> filter(YearRaw != "Total") |> filter(YearRaw %in% input$years_select) |>
+        filter(Visitors >= input$min_visitors)
+      just_np_years
+    })
     
     # this plot is really not working out 
     # i need to figure out how to set years for a better min 
     output$visitors_line <- renderPlot({
-      ggplot(data = just_np, aes(x = YearRaw, y = Visitors, group = `Unit Name`)) +
+      ggplot(data = year_reactive(), aes(x = YearRaw, y = Visitors, group = `Unit Name`)) +
         geom_line(aes(colour = `Unit Name`), show.legend = FALSE) +
         scale_color_viridis_d() +
         scale_y_continuous(labels = scales::comma) +
