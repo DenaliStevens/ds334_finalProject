@@ -16,6 +16,9 @@ library(plotly)
 library(fuzzyjoin)
 options(scipen = 999)
 
+# I downloaded the shape file for the map from this website
+# https://public-nps.opendata.arcgis.com/datasets/nps::nps-boundary-4/explore?location=37.015375%2C-81.906543%2C6.00
+
 # Bring in data and manipulate 
 nps <- sf::read_sf("/Users/denalistevens/Desktop/Spring 2024/SYE/SYE/NPS_shape/nps_boundary.shp") |>
   sf::st_transform('+proj=longlat +datum=WGS84')
@@ -60,25 +63,22 @@ label_text <- glue(
 # need to make visitors plot
 GET("https://query.data.world/s/fr5k6pcrcweo7wr657vchbeq6f3cci?dws=00000", write_disk(tf <- tempfile(fileext = ".xlsx")))
 df <- read_excel(tf)
-df2 <- df |> filter(YearRaw >= "2000")
-just_years <- df |> filter(YearRaw != "Total")
-just_np <- df |> filter(`Unit Type` == "National Park")
-national_parks <- df2 |> filter(`Unit Type` == "National Park")
-national_parks2 <- national_parks |> filter(YearRaw != "Total")
-national_parks3 <- national_parks |> filter(YearRaw != "Total") |> filter(Visitors >= 1000000)
+df <- df |> rename(Year = YearRaw) |> rename(Type = `Unit Type`) |> rename(Name = `Unit Name`)
+just_years <- df |> filter(Year != "Total")
+just_np <- df |> filter(Type == "National Park")
+
+
 
 # need to make visitors page input options 
-years <- unique(df$YearRaw) 
-type <- unique(df$`Unit Type`)
+years <- unique(df$Year) 
+type <- unique(df$Type)
 
 
 
 ui <- navbarPage("NavBar!",
                  tabPanel("Map",
                           h1("National Park Map"),
-                          hr("This is data collected from the National Park Service to 
-                          display the boundaries of national parks 
-                          both federally and non-federally owned"),
+                          hr("Click on any green highlighted area to learn more about a National Park!"),
                           leafletOutput("map1")),
                  tabPanel("Visitors Plot",
                           h1("Number of Visitors from 1904 - 2016"),
@@ -94,9 +94,10 @@ ui <- navbarPage("NavBar!",
                                           min = 0,
                                           max = 3000000,
                                           value = 1000000),
+
                             ),
                               mainPanel(
-                                plotOutput("visitors_line")
+                                plotlyOutput("visitors_line")
                         
                               )
                             )
@@ -126,20 +127,29 @@ server <- function(input, output) {
 
     
     year_reactive <- reactive({
-      just_np_years <- just_np |> filter(YearRaw != "Total") |> filter(YearRaw %in% input$years_select) |>
-        filter(Visitors >= input$min_visitors)
+      just_np_years <- just_np |> filter(Year != "Total") |> 
+        filter(Year >= input$years_select[1]) |>
+        filter(Year <= input$years_select[2]) |> 
+        filter(Visitors >= input$min_visitors) 
       just_np_years
     })
     
-    # this plot is really not working out 
-    # i need to figure out how to set years for a better min 
-    output$visitors_line <- renderPlot({
-      ggplot(data = year_reactive(), aes(x = YearRaw, y = Visitors, group = `Unit Name`)) +
-        geom_line(aes(colour = `Unit Name`), show.legend = FALSE) +
+  
+    output$visitors_line <- renderPlotly({
+      plot1 <- ggplot(data = year_reactive(), aes(x = Year, y = Visitors, group = Name,
+                                                         label = Name,
+                                                         label2 = Year,
+                                                         label3 = Visitors)) +
+        geom_line(aes(colour = Name), show.legend = FALSE) +
         scale_color_viridis_d() +
         scale_y_continuous(labels = scales::comma) +
-        labs(title = "Visitors in National Parks from 2000 to 2016", subtitle = "Minimum visitors is set at 1,000,000") +
-        theme_minimal()
+        labs(title = str_glue("Visitors in National Parks from {input$years_select[1]} to {input$years_select[2]}"),
+             caption = ("Minimum Visitors is set at ")) +
+        theme(legend.position = "none")
+        
+      
+      ggplotly(plot1, tooltip = c("label", "label2", "label3"))
+      
       
     })
     
