@@ -20,7 +20,7 @@ options(scipen = 999)
 # https://public-nps.opendata.arcgis.com/datasets/nps::nps-boundary-4/explore?location=37.015375%2C-81.906543%2C6.00
 
 # Bring in data and manipulate 
-nps <- sf::read_sf("/Users/denalistevens/Desktop/Spring 2024/SYE/SYE/NPS_shape/nps_boundary.shp") |>
+nps <- sf::read_sf("NPS_shape/nps_boundary.shp") |>
   sf::st_transform('+proj=longlat +datum=WGS84')
 p_names <- nps|>
   mutate(popup = paste0(nps$UNIT_NAME))
@@ -75,7 +75,7 @@ type <- unique(df$Type)
 
 
 
-ui <- navbarPage("NavBar!",
+ui <- navbarPage("",
                  tabPanel("Map",
                           h1("National Park Map"),
                           hr("Click on any green highlighted area to learn more about a National Park!"),
