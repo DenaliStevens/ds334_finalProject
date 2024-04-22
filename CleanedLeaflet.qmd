@@ -144,3 +144,25 @@ leaflet(nps) |>
               data = joined_clean)
 ```
 
+Adding a data table to the bottom of the map 
+```{r}
+library(DT)
+view(nps)
+view(joined_clean)
+nps_display <- nps |> select(UNIT_NAME, UNIT_TYPE, STATE, METADATA )
+datatable(nps_display)
+joined_display <- joined_clean |> select(PARKNAME, STATE, Established, Area, Visitors_2022, Description)
+joined_display <- joined_display |> rename(Name = PARKNAME, State = STATE, "Visitors in 2022" = Visitors_2022)
+
+# to make this work for finding oldest/newest park I think it needs to be just the year it was established or turn data type into a year 
+library(lubridate)
+
+joined_display |> mutate(Date = mdy(Established)) |> view()
+
+gsub("\\[.*?\\]", "", joined_display$Established)
+joined_display <- joined_display |> mutate(Date = gsub("\\[.*?\\]", "", joined_display$Established)) |> mutate(Established_D = mdy(Date)) |> select(Name, State, Established_D, Area, `Visitors in 2022`, Description) |> rename(Established = Established_D)
+
+datatable(joined_display) 
+```
+
+# Okay to finish this app I am going to add data tables below the map, a select park(s) option on visitors plot, and another tab with a sheet of questions that can be answered using the app. (The Purpose of the project is going to be a basic educational app regarding national parks). 

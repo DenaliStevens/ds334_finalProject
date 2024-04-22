@@ -15,6 +15,8 @@ library(leaflet)
 nps <- sf::read_sf("/Users/denalistevens/Desktop/Spring 2024/SYE/SYE/NPS_shape/nps_boundary.shp") |>
   sf::st_transform('+proj=longlat +datum=WGS84')
 
+
+
 p_names <- nps|>
   mutate(popup = paste0('<a href =', nps$METADATA, '>',
                         nps$UNIT_NAME, '</a>'))

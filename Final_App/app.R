@@ -81,7 +81,10 @@ type <- unique(df$Type)
 ui <- navbarPage("",
                  tabPanel("Map",
                           h1("National Park Map"),
-                          hr("Click on any green highlighted area to learn more about a National Park!"),
+                          hr(strong("This map includes national parks along with historic sites, trails, recreational areas, 
+                             and other designations created by the National Park Service.")),
+                          br("Any area highlighted in green is classified as a National Park and more information is 
+                             avaible when clicked on."),
                           leafletOutput("map1")),
                  tabPanel("Visitors Plot",
                           h1("Number of Visitors from 1904 - 2016"),
