@@ -1,36 +1,32 @@
-# load packages
-library(shiny)
+# Everything for map 
+
+## Packages and data for first map 
 library(sf)
-library(here)
 library(tidyverse)
 library(leaflet)
+library(here)
 library(plotly)
-library(scales)
+# I downloaded the data from this website and used the shp file 
+# https://public-nps.opendata.arcgis.com/datasets/nps::nps-boundary-4/explore?location=37.015375%2C-81.906543%2C6.00
+nps <- sf::read_sf("/Users/denalistevens/Desktop/Spring 2024/DATA_334/ds334_finalProject/Final_App/NPS_shape/nps_boundary.shp") |>
+  sf::st_transform('+proj=longlat +datum=WGS84')
+
+#nps <- sf::read_sf("NPS_shape/nps_boundary.shp") |>
+  #sf::st_transform('+proj=longlat +datum=WGS84')
+# why did this stop working
+
+p_names <- nps|>
+  mutate(popup = paste0('<a href =', nps$METADATA, '>',
+                        nps$UNIT_NAME, '</a>'))
+
+
+## Scrape for more info about National Park and clean it so I can merge with existing data 
 library(rvest)
 library(stringr)
-library(htmltools)
-library(glue)
-library("httr")
-library("readxl")
-library(plotly)
-library(fuzzyjoin)
-options(scipen = 999)
-
-# I downloaded the shape file for the map from this website
-# https://public-nps.opendata.arcgis.com/datasets/nps::nps-boundary-4/explore?location=37.015375%2C-81.906543%2C6.00
-
-# Bring in data and manipulate 
-nps <- sf::read_sf("NPS_shape/nps_boundary.shp") |>
-  sf::st_transform('+proj=longlat +datum=WGS84')
-p_names <- nps|>
-  mutate(popup = paste0(nps$UNIT_NAME))
-
-# need to make leaflet plot 
 url <- "https://en.wikipedia.org/wiki/List_of_national_parks_of_the_United_States"
 h <- read_html(url)
 tab <- h |> html_nodes("table")
 wiki_np_data <- tab[[1]] |> html_table()
-
 wiki_np_clean <- wiki_np_data |> mutate(wiki_name = str_replace_all(Name, "[^[:alnum:]]", " ")) |>
   relocate(wiki_name)
 nps_clean <- nps |> mutate(nps_name = str_remove_all(UNIT_NAME, " National") |>
@@ -40,19 +36,29 @@ nps_clean <- nps |> mutate(nps_name = str_remove_all(UNIT_NAME, " National") |>
                              str_remove_all( " Park")) |>
   relocate(nps_name)
 
+## Merge with existing data for map 
+library(fuzzyjoin)
 joined2 <- nps_clean |>
   stringdist_inner_join(wiki_np_clean, by = c("nps_name" = "wiki_name"), max_dist = 3) |>
   relocate(wiki_name, nps_name)
 names_2 <- joined2 |>
   mutate(popup = paste0('<a href =', joined2$METADATA, '>',
                         joined2$UNIT_NAME, '</a>'))
-joined_clean <- joined2 |> rename(Established = `Date established as park[12]`, Area = `Area (2023)[8]`, Visitors_2022 = `Recreation visitors (2022)[11]`) 
 
+## Okay this has gotten me to the point where I can now plot all of the parks I have the extended info from wiki for. 
+# Now I need to figure out have to have that information pop up when the park is clicked on. 
+# I also want just the park name to appear when the mouse hovers over it. 
+joined_clean <- joined2 |> 
+  rename(Established = `Date established as park[12]`,
+         Area = `Area (2023)[8]`, 
+         Visitors_2022 = `Recreation visitors (2022)[11]`) 
 joined_clean <- joined_clean |> mutate(popup = paste(
   "Name: ", UNIT_NAME,
   "Date of Establishment: ", Established,
   "Visitors in 2022: ", Visitors_2022,
   "Description of Park: ", Description))
+library(htmltools)
+library(glue)
 label_text <- glue(
   "<b> Name: </b> {joined_clean$UNIT_NAME}<br/>",
   "<b> Established: </b> {joined_clean$Established}<br/>",
@@ -60,19 +66,20 @@ label_text <- glue(
   "<b> Description: </b> {joined_clean$Description}<br/>") |>
   lapply(htmltools::HTML)
 
+
+
 # need to make visitors plot
+library("httr")
+library("readxl")
 GET("https://query.data.world/s/fr5k6pcrcweo7wr657vchbeq6f3cci?dws=00000", write_disk(tf <- tempfile(fileext = ".xlsx")))
 df <- read_excel(tf)
 df <- df |> rename(Year = YearRaw) |> rename(Type = `Unit Type`) |> rename(Name = `Unit Name`)
 just_years <- df |> filter(Year != "Total")
 just_np <- df |> filter(Type == "National Park")
 
-
-
 # need to make visitors page input options 
 years <- unique(df$Year) 
 type <- unique(df$Type)
-
 
 
 ui <- navbarPage("",
@@ -94,35 +101,39 @@ ui <- navbarPage("",
                                           min = 0,
                                           max = 3000000,
                                           value = 1000000),
-
+                              
                             ),
-                              mainPanel(
-                                plotlyOutput("visitors_line")
-                        
-                              )
+                            mainPanel(
+                              plotlyOutput("visitors_line")
+                              
                             )
-                          ))
+                          )
+                 ))
 
 
 
 server <- function(input, output) {
 
     output$map1 <- renderLeaflet({
-      leaflet(joined_clean) |>
+      leaflet(nps) |>
         setView(lng = -110, lat = 39.833, zoom = 2.5) |>
         addTiles() |>
         addProviderTiles(providers$OpenStreetMap.Mapnik) |>
-        addPolygons(color = "#006600",
+        addPolygons(color = "#09008a",
+                    weight = .5,
+                    smoothFactor = .5,
+                    opacity = 1.0, 
+                    label = nps$UNIT_NAME) |>
+        addPolygons(color = "#006400",
                     weight = 1.5,
                     smoothFactor = .5,
                     opacity = 1.0, 
                     fillOpacity = 0.5,
-                    highlightOptions = highlightOptions(color = "#003300", weight = 2,
+                    highlightOptions = highlightOptions(color = "#003b00", weight = 2,
                                                         bringToFront = TRUE),
                     label = joined_clean$UNIT_NAME,
-                    popup = label_text)
-      
-        
+                    popup = label_text,
+                    data = joined_clean)
     })
 
     
