@@ -11,10 +11,6 @@ library(plotly)
 nps <- sf::read_sf("NPS_Land/nps_boundary.shp") |>
   sf::st_transform('+proj=longlat +datum=WGS84')
 
-#nps <- sf::read_sf("NPS_shape/nps_boundary.shp") |>
-  #sf::st_transform('+proj=longlat +datum=WGS84')
-# why did this stop working
-
 p_names <- nps|>
   mutate(popup = paste0('<a href =', nps$METADATA, '>',
                         nps$UNIT_NAME, '</a>'))
