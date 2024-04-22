@@ -8,7 +8,7 @@ library(here)
 library(plotly)
 # I downloaded the data from this website and used the shp file 
 # https://public-nps.opendata.arcgis.com/datasets/nps::nps-boundary-4/explore?location=37.015375%2C-81.906543%2C6.00
-nps <- sf::read_sf("/Users/denalistevens/Desktop/Spring 2024/DATA_334/ds334_finalProject/Final_App/NPS_shape/nps_boundary.shp") |>
+nps <- sf::read_sf("NPS_Land/nps_boundary.shp") |>
   sf::st_transform('+proj=longlat +datum=WGS84')
 
 #nps <- sf::read_sf("NPS_shape/nps_boundary.shp") |>
