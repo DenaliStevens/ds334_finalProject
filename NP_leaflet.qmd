@@ -24,7 +24,7 @@ nps |> select(UNIT_NAME) |> arrange(UNIT_NAME)
 
 ```{r}
 leaflet(nps) |>
-  setView(lng = -98.583, lat = 39.833, zoom = 5) |>
+  setView(lng = -110, lat = 39.833, zoom = 2.5) |>
   addTiles() |>
   addProviderTiles(providers$OpenStreetMap.Mapnik) |>
   addPolygons(color = "#006600",
@@ -201,6 +201,28 @@ print(praise())
 
 # okay now I need to decide if I want to include all of the parks from my origional data set and maybe color code the ones I have more information on? Or just include the ones I have the additional information for..
 ## also why does all of this take so long to load? the map and the app 
+```
+
+```{r}
+leaflet(nps) |>
+  setView(lng = -110, lat = 39.833, zoom = 2.5) |>
+  addTiles() |>
+  addProviderTiles(providers$OpenStreetMap.Mapnik) |>
+  addPolygons(color = "#006600",
+              weight = 1.5,
+              smoothFactor = .5,
+              opacity = 1.0, 
+              fillOpacity = 0.5,
+              highlightOptions = highlightOptions(color = "#003300", weight = 2,
+      bringToFront = TRUE),
+              popup = p_names$popup) |>
+  addPolygons(
+              color = "#000",
+              weight = 1.5,
+              smoothFactor = .5,
+              opacity = 1.0, 
+              fillOpacity = 0.5,
+              data = joined_clean)
 ```
 
 

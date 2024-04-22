@@ -43,6 +43,8 @@ plot2 <- ggplot(data = national_parks3, aes(x = YearRaw, y = Visitors, group = `
   labs(title = "Visitors in National Parks from 2000 to 2016", subtitle = "Minimum visitors is set at 1,000,000") +
   theme_minimal()
 
+# How do i dodge or stagger x labels so you can see them all??
+
 ggplotly(plot2)
 
 ## I want to have a plot for every unit type 
