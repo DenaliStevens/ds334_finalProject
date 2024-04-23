@@ -77,15 +77,48 @@ just_np <- df |> filter(Type == "National Park")
 years <- unique(df$Year) 
 type <- unique(df$Type)
 
+# stuff for datatables 
+library(DT)
+All_Parks <- nps |> select(UNIT_NAME, UNIT_TYPE, STATE, METADATA )
+joined_display <- joined_clean |> select(PARKNAME, STATE, Established, Area, Visitors_2022, Description)
+joined_display <- joined_display |> rename(Name = PARKNAME, State = STATE, "Visitors in 2022" = Visitors_2022)
+library(lubridate)
+gsub("\\[.*?\\]", "", joined_display$Established)
+Just_National_parks <- joined_display |> mutate(Date = gsub("\\[.*?\\]", "", joined_display$Established)) |> 
+  mutate(Established_D = mdy(Date)) |> 
+  select(Name, State, Established_D, Area, `Visitors in 2022`, Description) |> 
+  rename(Established = Established_D)
+
 
 ui <- navbarPage("",
                  tabPanel("Map",
+                          fluidPage(
                           h1("National Park Map"),
                           hr(strong("This map includes national parks along with historic sites, trails, recreational areas, 
                              and other designations created by the National Park Service.")),
                           br("Any area highlighted in green is classified as a National Park and more information is 
                              avaible when clicked on."),
-                          leafletOutput("map1")),
+                          
+                          leafletOutput("map1"),
+                          fluidRow(
+                            column(4,
+                                   radioButtons("datasets", "Select Which Dataset to View",
+                                                choices = c("All_Parks", "Just_National_parks"))
+                                  ),
+                            column(4,
+                                   selectInput("Unit_types", "Select Classification(s) of Park",
+                                               choices = All_Parks$UNIT_TYPE, 
+                                               selected = "National Historical Park",
+                                               multiple = TRUE)
+                                   ),
+                            column(4,
+                                   selectInput("State", "Select State(s)",
+                                               choices = All_Parks$STATE,
+                                               selected = NULL,
+                                               multiple = TRUE))
+                            
+                          ),
+                          dataTableOutput("table1"))),
                  tabPanel("Visitors Plot",
                           h1("Number of Visitors from 1904 - 2016"),
                           sidebarLayout(
@@ -134,7 +167,17 @@ server <- function(input, output) {
                     popup = label_text,
                     data = joined_clean)
     })
+  
 
+    
+    data_reactive <- reactive({
+      data <- get(input$datasets) |> filter(UNIT_TYPE %in% input$unit_types)
+      data
+    })
+    
+    output$table1 <- DT::renderDataTable({
+      datatable(data_reactive())
+    })
     
     year_reactive <- reactive({
       just_np_years <- just_np |> filter(Year != "Total") |> 
