@@ -1,0 +1,9 @@
+---
+title: "Written Report"
+author: "Denali Stevens"
+format: html
+---
+
+# Abtract
+
+This project pulls from a few different files all regarding information about national parks in the United States. The one I started with is a shape file provided by the National Park Service that outlines the boarders of every park unit in the country. This not only includes those with the national park title, but also every designation of a national part site (which is quite an extensive list). While this data set had some interesting information about this wide spread of areas, I was more interested in diving further into just official national parks. To find that extended information I scraped a Wikipedia page containing the 63 areas titled as national parks. All of the data provided from those data sets is included in my final app. To take the exploration a little further, I implemented a data set about the amount of visitors in national parks. This data set also initially contained information for every designation of national park, but I narrowed it to just those with the "national park" title to make the graph more useful. 

@@ -9,6 +9,7 @@ library("httr")
 library("readxl")
 GET("https://query.data.world/s/fr5k6pcrcweo7wr657vchbeq6f3cci?dws=00000", write_disk(tf <- tempfile(fileext = ".xlsx")))
 df <- read_excel(tf)
+df |> filter(YearRaw == "Total")
 df2 <- df |> filter(YearRaw >= "2000")
 just_np <- df |> filter(`Unit Type` == "National Park")
 
