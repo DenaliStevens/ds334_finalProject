@@ -52,7 +52,8 @@ joined_clean <- joined_clean |> mutate(popup = paste(
   "Name: ", UNIT_NAME,
   "Date of Establishment: ", Established,
   "Visitors in 2022: ", Visitors_2022,
-  "Description of Park: ", Description))
+  "Description of Park: ", Description)) |> 
+  arrange(nps_name)
 library(htmltools)
 library(glue)
 label_text <- glue(
@@ -79,7 +80,7 @@ type <- unique(df$Type)
 
 # stuff for datatables 
 library(DT)
-All_Parks <- nps |> select(UNIT_NAME, UNIT_TYPE, STATE, METADATA )
+All_Parks <- nps |> select(UNIT_NAME, UNIT_TYPE, STATE, METADATA ) |> st_drop_geometry()
 joined_display <- joined_clean |> select(PARKNAME, STATE, Established, Area, Visitors_2022, Description)
 joined_display <- joined_display |> rename(Name = PARKNAME, State = STATE, "Visitors in 2022" = Visitors_2022)
 library(lubridate)
@@ -87,7 +88,9 @@ gsub("\\[.*?\\]", "", joined_display$Established)
 Just_National_parks <- joined_display |> mutate(Date = gsub("\\[.*?\\]", "", joined_display$Established)) |> 
   mutate(Established_D = mdy(Date)) |> 
   select(Name, State, Established_D, Area, `Visitors in 2022`, Description) |> 
-  rename(Established = Established_D)
+  rename(Established = Established_D) |> st_drop_geometry()
+
+park_names <- unique(just_np$Name)
 
 
 ui <- navbarPage("",
@@ -133,6 +136,10 @@ ui <- navbarPage("",
                                           min = 0,
                                           max = 3000000,
                                           value = 1000000),
+                              selectInput("sel_parks", "Select Parks to Graph",
+                                          choices = park_names,
+                                          selected = "Yellowstone",
+                                          multiple = TRUE),
                               
                             ),
                             mainPanel(
@@ -183,7 +190,10 @@ server <- function(input, output) {
       just_np_years <- just_np |> filter(Year != "Total") |> 
         filter(Year >= input$years_select[1]) |>
         filter(Year <= input$years_select[2]) |> 
-        filter(Visitors >= input$min_visitors) 
+        filter(Visitors >= input$min_visitors)
+        # filter(Name %in% input$sel_parks) If I keep parks to graph I should probably get rid of min_visitors
+        # it doesn't really make sense to have both
+        # Or I can make it so list of parks is limited by the amount of visitors and the years. 
       just_np_years
     })
     

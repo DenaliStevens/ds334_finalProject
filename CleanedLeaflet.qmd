@@ -164,6 +164,11 @@ gsub("\\[.*?\\]", "", joined_display$Established)
 joined_display <- joined_display |> mutate(Date = gsub("\\[.*?\\]", "", joined_display$Established)) |> mutate(Established_D = mdy(Date)) |> select(Name, State, Established_D, Area, `Visitors in 2022`, Description) |> rename(Established = Established_D)
 
 datatable(joined_display) 
+
+# get rid of geometry st_drop_geomtry. . 
+
+nps_display |> st_drop_geometry()
+
 ```
 
 
