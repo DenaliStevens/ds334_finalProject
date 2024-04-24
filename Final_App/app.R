@@ -92,6 +92,28 @@ Just_National_parks <- joined_display |> mutate(Date = gsub("\\[.*?\\]", "", joi
 
 park_names <- unique(just_np$Name)
 
+## attempting to make it so both data sets can be used for the table with appropriate drop downs 
+parameter_tabs <- tabsetPanel(
+  id = "params",
+  type = "hidden",
+  tabPanel("All_Parks",
+           selectInput("Unit_types", "Select Classification(s) of Park",
+                       choices = All_Parks$UNIT_TYPE, 
+                       selected = NULL,
+                       multiple = TRUE),
+           selectInput("State", "Select State(s)",
+                       choices = Just_National_parks$State,
+                       selected = NULL,
+                       multiple = TRUE)
+  ),
+  tabPanel("Just_National_parks", 
+           selectInput("States", "Select State(s)",
+                       choices = All_Parks$STATE,
+                       selected = NULL,
+                       multiple = TRUE)
+  )
+)
+
 
 ui <- navbarPage("",
                  tabPanel("Map",
@@ -104,21 +126,11 @@ ui <- navbarPage("",
                           
                           leafletOutput("map1"),
                           fluidRow(
+                            
                             column(4,
-                                   radioButtons("datasets", "Select Which Dataset to View",
+                                   selectInput("datasets", "Select Which Dataset to View",
                                                 choices = c("All_Parks", "Just_National_parks"))
-                                  ),
-                            column(4,
-                                   selectInput("Unit_types", "Select Classification(s) of Park",
-                                               choices = All_Parks$UNIT_TYPE, 
-                                               selected = "National Historical Park",
-                                               multiple = TRUE)
-                                   ),
-                            column(4,
-                                   selectInput("State", "Select State(s)",
-                                               choices = All_Parks$STATE,
-                                               selected = NULL,
-                                               multiple = TRUE))
+                                  )
                             
                           ),
                           dataTableOutput("table1"))),
@@ -151,7 +163,7 @@ ui <- navbarPage("",
 
 
 
-server <- function(input, output) {
+server <- function(input, output, session) {
 
     output$map1 <- renderLeaflet({
       leaflet(nps) |>
@@ -174,6 +186,17 @@ server <- function(input, output) {
                     popup = label_text,
                     data = joined_clean)
     })
+    
+    observeEvent(input$datasets, {
+      updateTabsetPanel(inputId = "params", selected = input$datasets)
+    }) 
+    
+    sample <- reactive({
+      switch(input$datasets,
+             All_Parks = All_Parks |> filter(UNIT_TYPE %in% input$unit_types) |> filter(STATE %in% input$State),
+             Just_National_parks = Just_National_parks |> filter(State %in% input$States)
+      )
+    })
   
 
     
@@ -183,15 +206,16 @@ server <- function(input, output) {
     })
     
     output$table1 <- DT::renderDataTable({
-      datatable(data_reactive())
+      datatable(sample())
     })
     
     year_reactive <- reactive({
       just_np_years <- just_np |> filter(Year != "Total") |> 
         filter(Year >= input$years_select[1]) |>
         filter(Year <= input$years_select[2]) |> 
-        filter(Visitors >= input$min_visitors)
-        # filter(Name %in% input$sel_parks) If I keep parks to graph I should probably get rid of min_visitors
+        filter(Visitors >= input$min_visitors) |>
+        filter(Name %in% input$sel_parks) 
+        # If I keep parks to graph I should probably get rid of min_visitors
         # it doesn't really make sense to have both
         # Or I can make it so list of parks is limited by the amount of visitors and the years. 
       just_np_years

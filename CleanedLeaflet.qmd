@@ -158,8 +158,6 @@ joined_display <- joined_display |> rename(Name = PARKNAME, State = STATE, "Visi
 # to make this work for finding oldest/newest park I think it needs to be just the year it was established or turn data type into a year 
 library(lubridate)
 
-joined_display |> mutate(Date = mdy(Established)) |> view()
-
 gsub("\\[.*?\\]", "", joined_display$Established)
 joined_display <- joined_display |> mutate(Date = gsub("\\[.*?\\]", "", joined_display$Established)) |> mutate(Established_D = mdy(Date)) |> select(Name, State, Established_D, Area, `Visitors in 2022`, Description) |> rename(Established = Established_D)
 
