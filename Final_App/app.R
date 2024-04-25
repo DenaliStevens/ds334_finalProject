@@ -176,11 +176,12 @@ server <- function(input, output, session) {
         setView(lng = -110, lat = 39.833, zoom = 2.5) |>
         addTiles() |>
         addProviderTiles(providers$OpenStreetMap.Mapnik) |>
-        addPolygons(color = "#09008a",
-                    weight = .5,
-                    smoothFactor = .5,
-                    opacity = 1.0, 
-                    label = nps$UNIT_NAME) |>
+         ## too much for a shiny app 
+       #addPolygons(color = "#09008a",
+                    #weight = .5,
+                    #smoothFactor = .5,
+                    #opacity = 1.0, 
+                    #label = nps$UNIT_NAME) |>
         addPolygons(color = "#006400",
                     weight = 1.5,
                     smoothFactor = .5,
