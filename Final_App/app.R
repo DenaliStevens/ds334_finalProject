@@ -81,6 +81,8 @@ type <- unique(df$Type)
 # stuff for datatables 
 library(DT)
 All_Parks <- nps |> select(UNIT_NAME, UNIT_TYPE, STATE, METADATA ) |> st_drop_geometry()
+big_parks <- unique(All_Parks$UNIT_TYPE) |> sort()
+big_states <- unique(All_Parks$STATE) |> sort()
 joined_display <- joined_clean |> select(PARKNAME, STATE, Established, Area, Visitors_2022, Description)
 joined_display <- joined_display |> rename(Name = PARKNAME, State = STATE, "Visitors in 2022" = Visitors_2022)
 library(lubridate)
@@ -89,27 +91,29 @@ Just_National_parks <- joined_display |> mutate(Date = gsub("\\[.*?\\]", "", joi
   mutate(Established_D = mdy(Date)) |> 
   select(Name, State, Established_D, Area, `Visitors in 2022`, Description) |> 
   rename(Established = Established_D) |> st_drop_geometry()
+little_states <- unique(Just_National_parks$State) |> sort() 
 
-park_names <- unique(just_np$Name)
+park_names <- unique(just_np$Name) |> sort()
+
 
 ## attempting to make it so both data sets can be used for the table with appropriate drop downs 
 parameter_tabs <- tabsetPanel(
   id = "params",
   type = "hidden",
   tabPanel("All_Parks",
-           selectInput("Unit_types", "Select Classification(s) of Park",
-                       choices = All_Parks$UNIT_TYPE, 
-                       selected = NULL,
-                       multiple = TRUE),
-           selectInput("State", "Select State(s)",
-                       choices = Just_National_parks$State,
-                       selected = NULL,
-                       multiple = TRUE)
+           selectizeInput("Unit_types", "Select Classification(s) of Park",
+                          choices = big_parks,
+                          selected = c("National Park", "National Preserve"),
+                          multiple = TRUE),
+           selectizeInput("State", "Select State(s)",
+                          choices = big_states,
+                          selected = "AK",
+                          multiple = TRUE)
   ),
   tabPanel("Just_National_parks", 
            selectInput("States", "Select State(s)",
-                       choices = All_Parks$STATE,
-                       selected = NULL,
+                       choices = little_states,
+                       selected = "AK",
                        multiple = TRUE)
   )
 )
@@ -128,12 +132,15 @@ ui <- navbarPage("",
                           fluidRow(
                             
                             column(4,
-                                   selectInput("datasets", "Select Which Dataset to View",
+                                  selectInput("datasets", "Select Which Dataset to View",
                                                 choices = c("All_Parks", "Just_National_parks"))
-                                  )
+                                  ),
+                            parameter_tabs
                             
                           ),
-                          dataTableOutput("table1"))),
+                          
+                          DT::dataTableOutput("table1")
+                          )),
                  tabPanel("Visitors Plot",
                           h1("Number of Visitors from 1904 - 2016"),
                           sidebarLayout(
@@ -149,9 +156,8 @@ ui <- navbarPage("",
                                           max = 3000000,
                                           value = 1000000),
                               selectInput("sel_parks", "Select Parks to Graph",
-                                          choices = park_names,
-                                          selected = "Yellowstone",
-                                          multiple = TRUE),
+                                          choices = NULL,
+                                          multiple = TRUE)
                               
                             ),
                             mainPanel(
@@ -193,53 +199,65 @@ server <- function(input, output, session) {
     
     sample <- reactive({
       switch(input$datasets,
-             All_Parks = All_Parks |> filter(UNIT_TYPE %in% input$unit_types) |> filter(STATE %in% input$State),
+             All_Parks = All_Parks |> filter(UNIT_TYPE %in% input$Unit_types) |> filter(STATE %in% input$State), 
              Just_National_parks = Just_National_parks |> filter(State %in% input$States)
       )
     })
   
-
     
-    data_reactive <- reactive({
-      data <- get(input$datasets) |> filter(UNIT_TYPE %in% input$unit_types)
-      data
-    })
     
     output$table1 <- DT::renderDataTable({
       datatable(sample())
     })
     
-    year_reactive <- reactive({
-      just_np_years <- just_np |> filter(Year != "Total") |> 
+    
+    year_visit_reactive <- reactive({
+      just_np_years <- just_np |> 
+        filter(Year != "Total") |> 
         filter(Year >= input$years_select[1]) |>
         filter(Year <= input$years_select[2]) |> 
         filter(Visitors >= input$min_visitors) |>
-        filter(Name %in% input$sel_parks) 
+        filter(Name %in% input$sel_parks)
         # If I keep parks to graph I should probably get rid of min_visitors
         # it doesn't really make sense to have both
         # Or I can make it so list of parks is limited by the amount of visitors and the years. 
       just_np_years
     })
     
-  
+    observeEvent(input$years_select | input$min_visitors, {
+      park_choices <- just_np |>
+        filter(Visitors >= input$min_visitors) |>
+        filter(Year >= input$years_select[1]) |>
+        filter(Year <= input$years_select[2]) |>
+        select(Name) |>
+        arrange(Name)
+      
+      updateSelectInput(inputId = "sel_parks",
+                        choices = park_choices)
+      
+      
+    })
+    
     output$visitors_line <- renderPlotly({
-      plot1 <- ggplot(data = year_reactive(), aes(x = Year, y = Visitors, group = Name,
-                                                         label = Name,
-                                                         label2 = Year,
-                                                         label3 = Visitors)) +
+      validate(
+        need(input$sel_parks, "Please select a park(s)")
+      )
+      plot1 <- ggplot(data = year_visit_reactive(), aes(x = Year, y = Visitors, group = Name,
+                                                        label = Name,
+                                                        label2 = Year,
+                                                        label3 = Visitors)) +
         geom_line(aes(colour = Name), show.legend = FALSE) +
         scale_color_viridis_d() +
         scale_y_continuous(labels = scales::comma) +
         labs(title = str_glue("Visitors in National Parks from {input$years_select[1]} to {input$years_select[2]}"),
              caption = ("Minimum Visitors is set at ")) +
         theme(legend.position = "none")
-        
+      
       
       ggplotly(plot1, tooltip = c("label", "label2", "label3"))
       
       
     })
-    
     
 }
 

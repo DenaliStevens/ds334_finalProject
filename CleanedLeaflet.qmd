@@ -14,7 +14,7 @@ library(leaflet)
 # https://public-nps.opendata.arcgis.com/datasets/nps::nps-boundary-4/explore?location=37.015375%2C-81.906543%2C6.00
 nps <- sf::read_sf("NPS_Land/nps_boundary.shp") |>
   sf::st_transform('+proj=longlat +datum=WGS84')
-view(nps)
+
 p_names <- nps|>
   mutate(popup = paste0('<a href =', nps$METADATA, '>',
                         nps$UNIT_NAME, '</a>'))
@@ -166,6 +166,8 @@ datatable(joined_display)
 # get rid of geometry st_drop_geomtry. . 
 
 nps_display |> st_drop_geometry()
+
+nps_display |> filter(UNIT_TYPE %in% c("National Historical Park", "National Historic Site")) 
 
 ```
 
