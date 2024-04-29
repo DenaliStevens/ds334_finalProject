@@ -163,7 +163,7 @@ ui <- navbarPage("",
                                           min = 0,
                                           max = 3000000,
                                           value = 1000000),
-                              selectInput("sel_parks", "Select Parks to Graph",
+                              selectizeInput("sel_parks", "Select Parks to Graph",
                                           choices = NULL,
                                           multiple = TRUE)
                               
@@ -249,11 +249,7 @@ server <- function(input, output, session) {
   
   
   output$table1 <- DT::renderDataTable({
-    
-    
     datatable(sample())
-    
-    
   })
   
   
