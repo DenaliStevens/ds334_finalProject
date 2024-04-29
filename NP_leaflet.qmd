@@ -85,7 +85,6 @@ nps_clean <- nps |> mutate(nps_name = str_remove_all(UNIT_NAME, " National") |>
                  str_remove_all( " Historical Trail") |>
                  str_remove_all( " Park")) |>
   relocate(nps_name)
-                
 
 # trim for whitespace
 
@@ -109,14 +108,19 @@ joined1 <- wiki_np_clean |>
   relocate(wiki_name, nps_name)
 
 
+
+
 # row 22, Glacier Bay and Glacier 
 # missing American Samoa, New River Gorge, Wrangell St Elias
 
 # joined1 is the data set I need and the best i can do for now 
 
 joined2 <- nps_clean |>
-  stringdist_inner_join(wiki_np_clean, by = c("nps_name" = "wiki_name"), max_dist = 3) |>
-  relocate(wiki_name, nps_name)
+  stringdist_inner_join(wiki_np_clean, by = c("nps_name" = "wiki_name"), max_dist = 4) |>
+  relocate(wiki_name, nps_name) |> 
+  
+
+#remove rows 4,5,9,11,12,33, 44, 63,69,70
 ```
 
 
