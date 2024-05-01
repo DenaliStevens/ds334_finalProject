@@ -51,6 +51,30 @@ label_text <- glue(
   "<b> Visitors in 2022: </b> {joined_clean$Visitors_2022}<br/>",
   "<b> Description: </b> {joined_clean$Description}<br/>") |>
   lapply(htmltools::HTML)
+
+library("httr")
+library("readxl")
+library(scales)
+options(scipen = 999)
+library(dplyr)
+library(plotly)
+library(tidyverse)
+
+
+GET("https://query.data.world/s/fr5k6pcrcweo7wr657vchbeq6f3cci?dws=00000", write_disk(tf <- tempfile(fileext = ".xlsx")))
+df <- read_excel(tf)
+df <- df |> 
+  rename(Year = YearRaw) |>
+  rename(Type = `Unit Type`) |> 
+  rename(Name = `Unit Name`)
+
+np_visitors <- df |> 
+  filter(Type == "National Park") |>
+  filter(Year != "Total") |>
+  filter(Year >= 1995 & Year <= 2016)
+
+one_park <- np_visitors |>
+  filter(Name == "Acadia National Park")
 ```
 
 
@@ -80,15 +104,26 @@ leaflet(joined_clean) |>
 
 ## Visualization 2
 ```{r}
-
+visitors_plot <- ggplot(data = np_visitors, aes(x = Year, y = Visitors, group = Name,
+                                                      label = Name,
+                                                      label2 = Year,
+                                                      label3 = Visitors)) +
+        geom_line(aes(color = Name), show.legend = FALSE) +
+        scale_color_viridis_d() +
+        scale_y_continuous(labels = scales::comma) +
+        labs(title = "Visitors in National Parks from 1995 to 2016") +
+        theme_minimal() +
+        theme(legend.position = "none")
+      
+      ggplotly(visitors_plot, tooltip = c("label", "label2", "label3"))
 ```
 
-
-
-When you click the **Render** button a presentation will be generated that includes both content and the output of embedded code. You can embed code like this:
-
+## Visualization 3
 ```{r}
-1 + 1
-```
+op_plot <- ggplot(data = one_park, aes(x = Year, y = Visitors)) +
+  geom_col(colour = 'darkolivegreen', fill = 'darkolivegreen3',
+           position = "dodge") +
+  labs(title = "Vistitors in Acadia National Park from 1995 to 2016")
 
--- must be in reproducable format 
+ggplotly(op_plot)
+```

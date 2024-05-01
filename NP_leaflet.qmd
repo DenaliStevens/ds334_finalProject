@@ -117,10 +117,11 @@ joined1 <- wiki_np_clean |>
 
 joined2 <- nps_clean |>
   stringdist_inner_join(wiki_np_clean, by = c("nps_name" = "wiki_name"), max_dist = 4) |>
-  relocate(wiki_name, nps_name) |> 
-  
-
+  relocate(wiki_name, nps_name) 
 #remove rows 4,5,9,11,12,33, 44, 63,69,70
+  
+  
+  
 ```
 
 

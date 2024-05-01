@@ -65,3 +65,61 @@ ggplotly(plot2)
 
 # drop down to pick one or more parks 
 Have th elist of parks that drop down reflect the input of years and min visitors 
+
+Set years from 1995 to 2015 and get rid of min visitors 
+```{r}
+library("httr")
+library("readxl")
+library(scales)
+options(scipen = 999)
+library(dplyr)
+library(plotly)
+library(tidyverse)
+
+
+GET("https://query.data.world/s/fr5k6pcrcweo7wr657vchbeq6f3cci?dws=00000", write_disk(tf <- tempfile(fileext = ".xlsx")))
+df <- read_excel(tf)
+df <- df |> 
+  rename(Year = YearRaw) |>
+  rename(Type = `Unit Type`) |> 
+  rename(Name = `Unit Name`)
+
+np_visitors <- df |> 
+  filter(Type == "National Park") |>
+  filter(Year != "Total") |>
+  filter(Year >= 1995 & Year <= 2016)
+
+      visitors_plot <- ggplot(data = np_visitors, aes(x = Year, y = Visitors, group = Name,
+                                                      label = Name,
+                                                      label2 = Year,
+                                                      label3 = Visitors)) +
+        geom_line(aes(color = Name), show.legend = FALSE) +
+        scale_color_viridis_d() +
+        scale_y_continuous(labels = scales::comma) +
+        labs(title = "Visitors in National Parks from 1995 to 2016") +
+        theme_minimal() +
+        theme(legend.position = "none")
+      
+      ggplotly(visitors_plot, tooltip = c("label", "label2", "label3"))
+      
+  
+    
+
+
+```
+
+Plot for looking at one park more indepth
+```{r}
+one_park <- np_visitors |>
+  filter(Name == "Acadia National Park")
+
+op_plot <- ggplot(data = one_park, aes(x = Year, y = Visitors)) +
+  geom_col(colour = 'darkolivegreen', fill = 'darkolivegreen3',
+           position = "dodge") 
+
+
+ggplotly(op_plot)
+
+
+```
+

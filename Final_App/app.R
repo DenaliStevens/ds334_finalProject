@@ -11,11 +11,6 @@ library(plotly)
 nps <- sf::read_sf("NPS_Land/nps_boundary.shp") |>
   sf::st_transform('+proj=longlat +datum=WGS84')
 
-p_names <- nps|>
-  mutate(popup = paste0('<a href =', nps$METADATA, '>',
-                        nps$UNIT_NAME, '</a>'))
-
-
 ## Scrape for more info about National Park and clean it so I can merge with existing data 
 library(rvest)
 library(stringr)
@@ -37,23 +32,21 @@ library(fuzzyjoin)
 joined2 <- nps_clean |>
   stringdist_inner_join(wiki_np_clean, by = c("nps_name" = "wiki_name"), max_dist = 3) |>
   relocate(wiki_name, nps_name)
-names_2 <- joined2 |>
-  mutate(popup = paste0('<a href =', joined2$METADATA, '>',
-                        joined2$UNIT_NAME, '</a>'))
 
 ## Okay this has gotten me to the point where I can now plot all of the parks I have the extended info from wiki for. 
 # Now I need to figure out have to have that information pop up when the park is clicked on. 
 # I also want just the park name to appear when the mouse hovers over it. 
 joined_clean <- joined2 |> 
-  rename(Established = `Date established as park[12]`,
+  rename(Established = `Date established as park[12]`, 
          Area = `Area (2023)[8]`, 
-         Visitors_2022 = `Recreation visitors (2022)[11]`) 
-joined_clean <- joined_clean |> mutate(popup = paste(
-  "Name: ", UNIT_NAME,
-  "Date of Establishment: ", Established,
-  "Visitors in 2022: ", Visitors_2022,
-  "Description of Park: ", Description)) |> 
+         Visitors_2022 = `Recreation visitors (2022)[11]`) |>
+  mutate(popup = paste(
+    "Name: ", UNIT_NAME,
+    "Date of Establishment: ", Established,
+    "Visitors in 2022: ", Visitors_2022,
+    "Description of Park: ", Description)) |>
   arrange(nps_name)
+
 library(htmltools)
 library(glue)
 label_text <- glue(
@@ -69,15 +62,20 @@ label_text <- glue(
 # need to make visitors plot
 library("httr")
 library("readxl")
+library(scales)
+options(scipen = 999)
 GET("https://query.data.world/s/fr5k6pcrcweo7wr657vchbeq6f3cci?dws=00000", write_disk(tf <- tempfile(fileext = ".xlsx")))
 df <- read_excel(tf)
-df <- df |> rename(Year = YearRaw) |> rename(Type = `Unit Type`) |> rename(Name = `Unit Name`)
-just_years <- df |> filter(Year != "Total")
-just_np <- df |> filter(Type == "National Park")
+np_visitors <- df |> 
+  rename(Year = YearRaw) |> 
+  rename(Type = `Unit Type`) |> 
+  rename(Name = `Unit Name`) |>
+  filter(Type == "National Park") |>
+  filter(Year != "Total") |>
+  filter(Year >= 1995 & Year <= 2016) 
+plot_parks <- unique(np_visitors$Name) |> 
+  sort()
 
-# need to make visitors page input options 
-years <- unique(df$Year) 
-type <- unique(df$Type)
 
 # stuff for datatables 
 library(DT)
@@ -93,15 +91,10 @@ Just_National_parks <- joined_display |> mutate(Date = gsub("\\[.*?\\]", "", joi
   select(Name, State, Established_D, Area, `Visitors in 2022`, Description) |> 
   rename(Established = Established_D) |> 
   st_drop_geometry()
-
 np_states <- unique(Just_National_parks$State) |>
   fct_expand("ALL") |> levels() |>
   sort()
-
-
 little_states <- unique(Just_National_parks$State) |> sort() 
-
-park_names <- unique(just_np$Name) |> sort()
 
 
 ## attempting to make it so both data sets can be used for the table with appropriate drop downs 
@@ -149,22 +142,17 @@ ui <- navbarPage("",
                             
                             DT::dataTableOutput("table1")
                           )),
-                 tabPanel("Visitors Plot",
-                          h1("Number of Visitors from 1904 - 2016"),
+                 tabPanel("Collective Visitors Plot",
+                          h1("Number of Visitors In All National Parks from 1995 - 2016"),
                           sidebarLayout(
                             sidebarPanel(
                               sliderInput("years_select", label = "Set Years for Graph",
-                                          min = 1904,
+                                          min = 1995,
                                           max = 2016,
                                           value = c(2000, 2016)),
                               # need to find a way to get rid of commas so it looks like years
-                              sliderInput("min_visitors", 
-                                          label = "Set a Minimum Amount of Visitors",
-                                          min = 0,
-                                          max = 3000000,
-                                          value = 1000000),
                               selectizeInput("sel_parks", "Select Parks to Graph",
-                                          choices = NULL,
+                                          choices = plot_parks,
                                           multiple = TRUE)
                               
                             ),
@@ -173,7 +161,21 @@ ui <- navbarPage("",
                               
                             )
                           )
-                 ))
+                 ),
+                 tabPanel("Single Park Visitors",
+                          h1("Specified Visitors Per National Park"),
+                          sidebarLayout(
+                            sidebarPanel(
+                              selectInput("choose_park", "Select a Park to View Their Visitors",
+                                             choices = plot_parks,
+                                             selected = "Acadia National Park")
+                              ),
+                            mainPanel(
+                              plotlyOutput("visitors_bar")
+                            )
+                            )
+                          )
+                 )
 
 
 
@@ -234,16 +236,6 @@ server <- function(input, output, session) {
            } else {
              Just_National_parks |> filter(State %in% input$States)
            }
-           
-           
-           # Just_National_parks |> filter(State %in% input$States)
-           ## |> filter(
-           # if(length(input$States) == 0){
-           # datatable(sample())
-           # } else {
-           # datatable(sample() |> filter(State %in% input$States))
-           # }
-           # )
     )
   })
   
@@ -252,53 +244,41 @@ server <- function(input, output, session) {
     datatable(sample())
   })
   
-  
-  year_visit_reactive <- reactive({
-    just_np_years <- just_np |> 
-      filter(Year != "Total") |> 
-      filter(Year >= input$years_select[1]) |>
-      filter(Year <= input$years_select[2]) |> 
-      filter(Visitors >= input$min_visitors) |>
-      filter(Name %in% input$sel_parks)
-    # If I keep parks to graph I should probably get rid of min_visitors
-    # it doesn't really make sense to have both
-    # Or I can make it so list of parks is limited by the amount of visitors and the years. 
-    just_np_years
-  })
-  
-  observeEvent(input$years_select | input$min_visitors, {
-    park_choices <- just_np |>
-      filter(Visitors >= input$min_visitors) |>
+  visit_reactive <- reactive({
+    plot_data <- np_visitors |>
       filter(Year >= input$years_select[1]) |>
       filter(Year <= input$years_select[2]) |>
-      select(Name) |>
-      arrange(Name)
-    
-    updateSelectInput(inputId = "sel_parks",
-                      choices = park_choices)
-    
-    
+      filter(Name %in% input$sel_parks)
   })
   
   output$visitors_line <- renderPlotly({
     validate(
       need(input$sel_parks, "Please select a park(s)")
     )
-    plot1 <- ggplot(data = year_visit_reactive(), aes(x = Year, y = Visitors, group = Name,
-                                                      label = Name,
-                                                      label2 = Year,
-                                                      label3 = Visitors)) +
-      geom_line(aes(colour = Name), show.legend = FALSE) +
+    v_plot <- ggplot(data = visit_reactive(), aes(x = Year, y = Visitors, group = Name,
+                                             label = Name,
+                                             label2 = Year,
+                                             label3 = Visitors)) +
+      geom_line(aes(color = Name), show.legend = FALSE) +
       scale_color_viridis_d() +
       scale_y_continuous(labels = scales::comma) +
-      labs(title = str_glue("Visitors in National Parks from {input$years_select[1]} to {input$years_select[2]}"),
-           caption = ("Minimum Visitors is set at ")) +
+      labs(title = str_glue("Visitors in National Parks from {input$years_select[1]} to {input$years_select[2]}")) +
       theme(legend.position = "none")
+    ggplotly(v_plot, tooltip = c("label", "label2", "label3"))
     
-    
-    ggplotly(plot1, tooltip = c("label", "label2", "label3"))
-    
-    
+  })
+  
+  op_reactive <- reactive({
+    op_data <- np_visitors |>
+      filter(Name == input$choose_park)
+    op_data
+  })
+  
+  output$visitors_bar <- renderPlotly({
+    ggplot(data = op_reactive(), aes(x = Year, y = Visitors)) +
+      geom_col(colour = 'darkolivegreen', fill = 'darkolivegreen3',
+               position = "dodge") +
+      labs(title = str_glue("Vistitors in {input$choose_park} from 1995 to 2016"))
   })
   
 }
