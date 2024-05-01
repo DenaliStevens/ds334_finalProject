@@ -40,8 +40,9 @@ nps_clean <- nps |> mutate(nps_name = str_remove_all(UNIT_NAME, " National") |>
 joined2 <- nps_clean |>
   stringdist_inner_join(wiki_np_clean, by = c("nps_name" = "wiki_name"), max_dist = 4) |>
   relocate(wiki_name, nps_name)
+
 #remove rows 4,5,9,11,12,33, 44, 63,69,70 due to duplication or wrong classification 
-joined2 <- joined2[-c(4,5,9,11,12,33,44,63,69,70), ]
+joined2 <- joined2[-c(2,4,5,28,38,39,43,63,69,70), ]
 
 
 joined_clean <- joined2 |> 
@@ -63,7 +64,7 @@ label_text <- glue(
   lapply(htmltools::HTML)
 
 save(joined_clean,
-        file = "joined_map_data.Rds")
+        file = "joined_map_data.rda")
 ```
 
 # Data tables
@@ -72,27 +73,30 @@ library(DT)
 library(lubridate)
 
 nps_display <- nps |> select(UNIT_NAME, UNIT_TYPE, STATE, METADATA )
-datatable(nps_display)
+
+
 joined_display <- joined_clean |> select(PARKNAME, STATE, Established, Area, Visitors_2022, Description)
-joined_display <- joined_display |> rename(Name = PARKNAME, State = STATE, "Visitors in 2022" = Visitors_2022)
+
+as.numeric(joined_display$Visitors_2022)
+parse_number(joined_display$Visitors_2022)
+
+joined_display <- joined_display |> rename(Name = PARKNAME, State = STATE)
   
 
-# to make this work for finding oldest/newest park I think it needs to be just the year it was established or turn data type into a year 
-
-
-gsub("\\[.*?\\]", "", joined_display$Established)
 joined_display <- joined_display |> 
   mutate(Date = gsub("\\[.*?\\]", "", joined_display$Established)) |> 
+  mutate(Area = gsub("\\..*", "", joined_display$Area)) |> 
+  mutate(Visitors_2022 = parse_number(joined_display$Visitors_2022)) |> 
+  mutate(Area  = parse_number(joined_display$Area)) |> 
   mutate(Established_D = mdy(Date)) |> 
-  select(Name, State, Established_D, Area, `Visitors in 2022`, Description) |> 
-  rename(Established = Established_D)
+  select(Name, State, Established_D, Area, Visitors_2022, Description) |> 
+  rename(Established = Established_D) |>
+  rename(`Visitors in 2022` = Visitors_2022) |>
+  rename(`Area (in Acres)` = Area)
 
-datatable(joined_display) 
 
-# get rid of geometry st_drop_geomtry. . 
+save(joined_display,
+     file = "joined_display.rda")
 
-nps_display |> st_drop_geometry()
-
-nps_display |> filter(UNIT_TYPE %in% c("National Historical Park", "National Historic Site")) 
 ```
 

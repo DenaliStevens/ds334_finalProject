@@ -11,56 +11,17 @@ library(plotly)
 nps <- sf::read_sf("NPS_Land/nps_boundary.shp") |>
   sf::st_transform('+proj=longlat +datum=WGS84')
 
-## Scrape for more info about National Park and clean it so I can merge with existing data 
-library(rvest)
-library(stringr)
-url <- "https://en.wikipedia.org/wiki/List_of_national_parks_of_the_United_States"
-h <- read_html(url)
-tab <- h |> html_nodes("table")
-wiki_np_data <- tab[[1]] |> html_table()
-wiki_np_clean <- wiki_np_data |> mutate(wiki_name = str_replace_all(Name, "[^[:alnum:]]", " ")) |>
-  relocate(wiki_name)
-nps_clean <- nps |> mutate(nps_name = str_remove_all(UNIT_NAME, " National") |>
-                             str_remove_all(" Historical Site") |> 
-                             str_remove_all( " Historical Park") |>
-                             str_remove_all( " Historical Trail") |>
-                             str_remove_all( " Park")) |>
-  relocate(nps_name)
+# data for joined map of just national parks with more information
+# created in CleaningData.qmd
+load("joined_map_data.rda")
 
-## Merge with existing data for map 
-library(fuzzyjoin)
-joined2 <- nps_clean |>
-  stringdist_inner_join(wiki_np_clean, by = c("nps_name" = "wiki_name"), max_dist = 3) |>
-  relocate(wiki_name, nps_name)
-
-## Okay this has gotten me to the point where I can now plot all of the parks I have the extended info from wiki for. 
-# Now I need to figure out have to have that information pop up when the park is clicked on. 
-# I also want just the park name to appear when the mouse hovers over it. 
-joined_clean <- joined2 |> 
-  rename(Established = `Date established as park[12]`, 
-         Area = `Area (2023)[8]`, 
-         Visitors_2022 = `Recreation visitors (2022)[11]`) |>
-  mutate(popup = paste(
-    "Name: ", UNIT_NAME,
-    "Date of Establishment: ", Established,
-    "Visitors in 2022: ", Visitors_2022,
-    "Description of Park: ", Description)) |>
-  arrange(nps_name)
-
-# clicked on the r object and hit okay 
-load(joined_map_data)
-
-
-library(htmltools)
-library(glue)
+# Create labels that users see when clicking on a park 
 label_text <- glue(
   "<b> Name: </b> {joined_clean$UNIT_NAME}<br/>",
   "<b> Established: </b> {joined_clean$Established}<br/>",
   "<b> Visitors in 2022: </b> {joined_clean$Visitors_2022}<br/>",
   "<b> Description: </b> {joined_clean$Description}<br/>") |>
   lapply(htmltools::HTML)
-# save rds
-# saves r object that can be manipulated else where
 
 
 # need to make visitors plot
@@ -81,24 +42,19 @@ plot_parks <- unique(np_visitors$Name) |>
   sort()
 
 
-# stuff for datatables 
+# stuff for datatables
 library(DT)
 All_Parks <- nps |> select(UNIT_NAME, UNIT_TYPE, STATE, METADATA ) |> st_drop_geometry()
 big_parks <- unique(All_Parks$UNIT_TYPE) |> sort()
 big_states <- unique(All_Parks$STATE) |> sort()
-joined_display <- joined_clean |> select(PARKNAME, STATE, Established, Area, Visitors_2022, Description)
-joined_display <- joined_display |> rename(Name = PARKNAME, State = STATE, "Visitors in 2022" = Visitors_2022)
-library(lubridate)
-gsub("\\[.*?\\]", "", joined_display$Established)
-Just_National_parks <- joined_display |> mutate(Date = gsub("\\[.*?\\]", "", joined_display$Established)) |> 
-  mutate(Established_D = mdy(Date)) |> 
-  select(Name, State, Established_D, Area, `Visitors in 2022`, Description) |> 
-  rename(Established = Established_D) |> 
+
+load("joined_display.rda")
+Just_National_parks <- joined_display |>
   st_drop_geometry()
-np_states <- unique(Just_National_parks$State) |>
-  fct_expand("ALL") |> levels() |>
+
+little_states <- unique(Just_National_parks$State) |>
   sort()
-little_states <- unique(Just_National_parks$State) |> sort() 
+
 
 
 ## attempting to make it so both data sets can be used for the table with appropriate drop downs 
@@ -117,7 +73,7 @@ parameter_tabs <- tabsetPanel(
   ),
   tabPanel("Just_National_parks", 
            selectInput("States", "Select State(s)",
-                       choices = np_states,
+                       choices = little_states,
                        selected = NULL,
                        multiple = TRUE)
   )
@@ -191,11 +147,11 @@ server <- function(input, output, session) {
       addTiles() |>
       addProviderTiles(providers$OpenStreetMap.Mapnik) |>
       ## too much for a shiny app 
-      addPolygons(color = "#09008a",
-                  weight = .5,
-                  smoothFactor = .5,
-                  opacity = 1.0, 
-                  label = nps$UNIT_NAME) |>
+      # addPolygons(color = "#09008a",
+        #          weight = .5,
+         #         smoothFactor = .5,
+         #         opacity = 1.0, 
+          #        label = nps$UNIT_NAME) |>
       addPolygons(color = "#006400",
                   weight = 1.5,
                   smoothFactor = .5,

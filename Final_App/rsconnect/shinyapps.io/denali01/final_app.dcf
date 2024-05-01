@@ -1,0 +1,13 @@
+name: final_app
+title:
+username: denali01
+account: denali01
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 11910711
+bundleId: 8564056
+url: https://denali01.shinyapps.io/final_app/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: joined_map_data.Rds|NPS_-_Land_Resources_Division_Boundary_and_Tract_Data_Service (1).zip|NPS_shape/nps_boundary.cpg|NPS_shape/nps_boundary.dbf|NPS_shape/nps_boundary.prj|NPS_shape/nps_boundary.shp|NPS_shape/nps_boundary.shx
