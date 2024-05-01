@@ -47,6 +47,10 @@ joined_clean <- joined2 |>
     "Description of Park: ", Description)) |>
   arrange(nps_name)
 
+# clicked on the r object and hit okay 
+load(joined_map_data)
+
+
 library(htmltools)
 library(glue)
 label_text <- glue(
