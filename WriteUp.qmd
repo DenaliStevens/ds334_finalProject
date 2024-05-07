@@ -6,7 +6,7 @@ format: html
 
 # Abtract
 
-This project pulls from a few different files all regarding information about national parks in the United States that I used to create a shiny app with the purpose of providing a very basic education about national parks. To build the map I used a shape file from the national park service to plot all areas that they manage. This not only includes those with the national park title, but also every designation of a national part site (which is quite an extensive list). To add onto the map, I scraped a the National Parks Wikipedia page to get some extra information about the true National Parks so users could see some more information when they clicked on a chosen park. In addition to the map, there are data tables that list out relevant information for the National Parks and other areas featured on the map. I also used more data provided by the National Parks Service to plot information regarding the amount of visitors to each of the national parks over a range of years. This data was used to create a couple of graphs displaying visitor trends in national parks. 
+This project pulls from a few different files all regarding information about national parks in the United States that I used to create a shiny app with the purpose of providing a very basic education about national parks. To build the map I used a shape file from the national park service to plot all the areas that they manage. This not only includes those with the national park title, but also every designation of a national part site (which is quite an extensive list). To add onto the map, I scraped the National Parks Wikipedia page to get some extra information about the true National Parks so users could see some more information when they clicked on a chosen park. In addition to the map, there are data tables that list out relevant information for the National Parks and other areas featured on the map. I also used more data provided by the National Parks Service to plot information regarding the amount of visitors to each of the national parks over a range of years. This data was used to create a couple of graphs displaying visitor trends in national parks. 
 
 # Introduction
 
@@ -19,9 +19,9 @@ A shape file provided by the National Park Service. The variables I used from th
 - *UNIT_NAME*, The name of the park, site, or area that will appear on the map. This is what shows when the user hovers over any of the blue areas and is also used as the name for the data table "All_Parks".
 - *UNIT_TPE*, The classification of each area that the park service manages. This is displayed on the data table "All_Parks" and the user can view areas by type classification. 
 - *STATE*, The state each area is in, displayed on the "All_Parks" data table and the user can view areas by state.
-- *METADATA*, The link to the national park service page about each area, doesn't actually provide much information but is displayed on the "All_Parks" data table.
+- *METADATA*, The link to the national park service page about each area doesn't actually provide much information but is displayed on the "All_Parks" data table.
 
-To designate the areas with the "National Park" title and separate them for plotting on the map and the data tables I used the data that I scraped from Wikipedia and joined them by name. The relevant variables from Wikipedia are: 
+To designate the areas with the "National Park" title and separate them for plotting on the map and the data tables, I used the data that I scraped from Wikipedia and joined them by name. The relevant variables from Wikipedia are: 
 
 - *Name*, The name of the National Park. This is used in the map when the user clicks on green areas and is also displayed in the data table "Just_National_Parks"
 - *State*, The state the park is located in. Appears in "Just_National_Parks" table and the user can view parks by state designation. 
@@ -42,7 +42,7 @@ Creating the map boosts user interaction with information about national parks a
 - *Visitors*, A visitor count for each year along with a collective total amount 
 - *YearRaw*, Each year that the data was collected and a total amount for all years (labeled "Total")
 
-Using this data I created two interactive graphs that allow the user to view the visitors over a range of years, either looking at a collection of parks selected by the user or one park specifically to view more in depth. Adding this information allows the user to learn about visitor trends and how highly trafficked some of these areas are. And while this data set does provide visitation numbers for 400 of the areas the national park service manages, I filtered in down to just keep the areas with the "National Park" classification to simplify the options and visuals. I also changed the year range from 1905 to 2016, to 1995 through 2016 in order to provide more relevant information and reduce the clutter of the visuals. Some of the questions that can be posed using the addition of this data include the most/least popular year for a chosen park, which out of a group of parks was most visited in a chosen year(s), and general trends of visitors 
+Using this data I created two interactive graphs that allow the user to view the visitors over a range of years, either looking at a collection of parks selected by the user or one park specifically to view more in depth. Adding this information allows the user to learn about visitor trends and how highly trafficked some of these areas are. And while this data set does provide visitation numbers for 400 of the areas the national park service manages, I filtered it down to just keep the areas with the "National Park" classification to simplify the options and visuals. I also changed the year range from 1905 to 2016, to 1995 through 2016 in order to provide more relevant information and reduce the clutter of the visuals. Some of the questions that can be posed using the addition of this data include the most/least popular year for a chosen park, which out of a group of parks was most visited in a chosen year(s), and general trends of visitors.
 
 # Visualizations
 **Map with popup**
@@ -140,7 +140,7 @@ datatable(small_table)
 **Visitors Line Plot**
 
 
-This is the more interesting plot regarding the amount of visitors in each park. This version shows all of the parks and is a little cluttered and overwhelming. In the shiny app, the graph appears blank and the user must select the parks they want to view before any thing appears. As soon as one park is selected it populates on the graph and users can select as many national parks to view as they want. 
+This is the more interesting plot regarding the amount of visitors in each park. This version shows all of the parks and is a little cluttered and overwhelming. In the shiny app, the graph appears blank and the user must select the parks they want to view before anything appears. As soon as one park is selected it populates on the graph and users can select as many national parks to view as they want. 
 
 ```{r}
 #| echo: false
