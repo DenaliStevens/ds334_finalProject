@@ -6,6 +6,7 @@ library(tidyverse)
 library(leaflet)
 library(here)
 library(plotly)
+library(glue)
 # I downloaded the data from this website and used the shp file 
 # https://public-nps.opendata.arcgis.com/datasets/nps::nps-boundary-4/explore?location=37.015375%2C-81.906543%2C6.00
 nps <- sf::read_sf("NPS_Land/nps_boundary.shp") |>
@@ -147,11 +148,11 @@ server <- function(input, output, session) {
       addTiles() |>
       addProviderTiles(providers$OpenStreetMap.Mapnik) |>
       ## too much for a shiny app 
-      # addPolygons(color = "#09008a",
-        #          weight = .5,
-         #         smoothFactor = .5,
-         #         opacity = 1.0, 
-          #        label = nps$UNIT_NAME) |>
+       addPolygons(color = "#09008a",
+                  weight = .5,
+                  smoothFactor = .5,
+                 opacity = 1.0, 
+               label = nps$UNIT_NAME) |>
       addPolygons(color = "#006400",
                   weight = 1.5,
                   smoothFactor = .5,

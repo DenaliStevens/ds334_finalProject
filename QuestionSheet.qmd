@@ -1,0 +1,83 @@
+---
+title: "Question Sheet"
+author: "Denali Stevens"
+format: 
+  html:
+    output: false
+    self-contained: true
+---
+
+# Section 1
+Use the map and data tables to answer the following:
+
+1. What is the oldest national park and when was it established?
+```{r}
+#| code-fold: true
+
+# Yellowstone. It was established on March 1, 1872
+```
+
+2. What is the newest national park and when was it established?
+```{r}
+#| code-fold: true
+
+# White Sands. It was established on December 20, 2019
+```
+
+3. What is the biggest national park by area? What state is it located in?
+```{r}
+#| code-fold: true
+
+# Wrangell St. Elias located in AK
+```
+
+4. What is the smallest national park by area? What state is it located in?
+```{r}
+#| code-fold: true
+
+# Gateway Arch located in IL
+```
+
+5. Which state has the most national parks? How many does it have 
+```{r}
+#| code-fold: true
+
+# California has the most parks with a total of 9 in the state 
+```
+
+# Section 2
+Use the collective visitors plot to answer the following:
+
+1. Select 3 of your favorite parks
+  a. Which one had the most visitors in 2000? How many did it have?
+  b. How about the most visitors in 2016? Is it the same park as part a?
+
+2. Can you figure out which park has the most visitors in this graphic? (Hint: you can sort the table by visitors to get an idea of which ones to look at)
+```{r}
+#| code-fold: true
+
+# Great Smoky Mountains 
+```
+
+# Section 3
+
+Use the single park visitors plot to answer the following:
+
+1. Select Yellowstone National Park 
+  a. What year did Yellowstone record the most visitors in this time period?
+```{r}
+#| code-fold: true
+
+# In 2016, with 4,257,177 visitors 
+```
+  b. What year did it record the least visitors?
+```{r}
+#| code-fold: true
+
+# In 2001, with 2,758,526
+```
+  
+2. Now select your own park and answer the same questions!
+
+  
+

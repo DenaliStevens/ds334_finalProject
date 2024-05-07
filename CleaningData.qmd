@@ -20,6 +20,7 @@ library(glue)
 nps <- sf::read_sf("NPS_Land/nps_boundary.shp") |>
   sf::st_transform('+proj=longlat +datum=WGS84')
 
+
 # Data for just National Parks 
 url <- "https://en.wikipedia.org/wiki/List_of_national_parks_of_the_United_States"
 h <- read_html(url)
@@ -76,9 +77,6 @@ nps_display <- nps |> select(UNIT_NAME, UNIT_TYPE, STATE, METADATA )
 
 
 joined_display <- joined_clean |> select(PARKNAME, STATE, Established, Area, Visitors_2022, Description)
-
-as.numeric(joined_display$Visitors_2022)
-parse_number(joined_display$Visitors_2022)
 
 joined_display <- joined_display |> rename(Name = PARKNAME, State = STATE)
   

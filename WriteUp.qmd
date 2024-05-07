@@ -6,15 +6,161 @@ format: html
 
 # Abtract
 
-This project pulls from a few different files all regarding information about national parks in the United States. The one I started with is a shape file provided by the National Park Service that outlines the boarders of every park unit in the country. This not only includes those with the national park title, but also every designation of a national part site (which is quite an extensive list). While this data set had some interesting information about this wide spread of areas, I was more interested in diving further into just official national parks. To find that extended information I scraped a Wikipedia page containing the 63 areas titled as national parks. All of the data provided from those data sets is included in my final app. To take the exploration a little further, I included a data set about the amount of visitors in national parks. This data set also initially contained information for every designation of national park, but I narrowed it to just those with the "national park" title to make the graph more useful.
+This project pulls from a few different files all regarding information about national parks in the United States that I used to create a shiny app with the purpose of providing a very basic education about national parks. To build the map I used a shape file from the national park service to plot all areas that they manage. This not only includes those with the national park title, but also every designation of a national part site (which is quite an extensive list). To add onto the map, I scraped a the National Parks Wikipedia page to get some extra information about the true National Parks so users could see some more information when they clicked on a chosen park. In addition to the map, there are data tables that list out relevant information for the National Parks and other areas featured on the map. I also used more data provided by the National Parks Service to plot information regarding the amount of visitors to each of the national parks over a range of years. This data was used to create a couple of graphs displaying visitor trends in national parks. 
 
 # Introduction
 
-This app utilizes data and visualizations to offer an opportunity for expanding knowledge about our National Parks and delivering a fundamental education about them. The shape file that I used to create the interactive map demonstrates where every park unit in the United States is and highlights where all National Parks are located. I think this does a great job of displaying not only the location, but also the size and amount of parks in the United States. The information I scraped from the National Parks Wikipedia page provided a convenient way to pose interesting questions a user can explore using the app. Some of the data that provides room for questions and exploration includes the date the park was established, its area, the state it's in, and the amount of visitors in 2022. The Wiki data also provides a brief description of each area with the title "National Park" and joining the wiki data to the nps data is what allows the user to click on these areas for more information. 
+This app utilizes data and visualizations to offer an opportunity for expanding knowledge about our National Parks and delivering a fundamental education about them. 
 
-The data that I scraped from the National Parks Wikipedia page provided the best way to pose interesting questions this app can help answer and the map it provides 
-* I did use chat gpt in this section to help me rephase and be consise in what I wanted to say. 
+**The map and data tables use the following information:**
+
+A shape file provided by the National Park Service. The variables I used from this file are:
+
+- *UNIT_NAME*, The name of the park, site, or area that will appear on the map. This is what shows when the user hovers over any of the blue areas and is also used as the name for the data table "All_Parks".
+- *UNIT_TPE*, The classification of each area that the park service manages. This is displayed on the data table "All_Parks" and the user can view areas by type classification. 
+- *STATE*, The state each area is in, displayed on the "All_Parks" data table and the user can view areas by state.
+- *METADATA*, The link to the national park service page about each area, doesn't actually provide much information but is displayed on the "All_Parks" data table.
+
+To designate the areas with the "National Park" title and separate them for plotting on the map and the data tables I used the data that I scraped from Wikipedia and joined them by name. The relevant variables from Wikipedia are: 
+
+- *Name*, The name of the National Park. This is used in the map when the user clicks on green areas and is also displayed in the data table "Just_National_Parks"
+- *State*, The state the park is located in. Appears in "Just_National_Parks" table and the user can view parks by state designation. 
+- *Established*, Gives the date the park was established. This appears in the popup window when a park is clicked on and can also be used in the table "Just_National_Parks" to sort by oldest or newest parks. 
+- *Area (in acres)*, Gives the size of the parks in acres. This can be used to sort the parks in the "Just_National_Parks" by size. 
+- *Visitors in 2022)*,  Shows the amount of visitors to each park in 2022. This appears in the popup window and can also be used to sort "Just_National_Parks" by amount of visitors. 
+- *Description*, A brief description of each park. This appears in the popup window and the data table "Just_National_Parks". 
+
+Creating the map boosts user interaction with information about national parks and creates an interesting visualization of these areas. It displays the size and geographic location of each area to help users get a better idea of where they are and how much space is covered by parks and other national sites in the country. The data tables provide a gathered place of information that allows for the posing of questions about the areas shown in the map. This is where the majority of questions and education about national parks takes place. The information from the Wikipedia page allows users to explore details of these areas like the oldest/newest park or the biggest/smallest park, and many more investigative questions. 
+
+**The visitors plots use the following information:**
+
+
+-- An excel file published by the National Parks Service containing the visitor count for 400 national park sites from 1906 to 2016. The variables I used are: 
+
+- *Unit Name*, The name of the park or area
+- *Unit Type*, The classification type of the area
+- *Visitors*, A visitor count for each year along with a collective total amount 
+- *YearRaw*, Each year that the data was collected and a total amount for all years (labeled "Total")
+
+Using this data I created two interactive graphs that allow the user to view the visitors over a range of years, either looking at a collection of parks selected by the user or one park specifically to view more in depth. Adding this information allows the user to learn about visitor trends and how highly trafficked some of these areas are. And while this data set does provide visitation numbers for 400 of the areas the national park service manages, I filtered in down to just keep the areas with the "National Park" classification to simplify the options and visuals. I also changed the year range from 1905 to 2016, to 1995 through 2016 in order to provide more relevant information and reduce the clutter of the visuals. Some of the questions that can be posed using the addition of this data include the most/least popular year for a chosen park, which out of a group of parks was most visited in a chosen year(s), and general trends of visitors 
+
 # Visualizations
+**Map with popup**
+
+
+This is the map that I created using the national parks shape file joined with the information scraped from the Wikipedia page. It is color coded to indicate the difference between the areas labeled as National Park with more information (green) and the other areas managed by the park service (blue). The green areas provide a popup with the additional information, while the blue areas only provide the name of the area when hovered over. However, given the large size of the shape file, I can only publish a visualization with one of the data sets. So the published version can only show the green areas I am using to show those with the title of National Park. 
+```{r}
+#| echo: false
+#| output: false
+#| warning: false
+
+## Packages and data for first map 
+library(sf)
+library(tidyverse)
+library(leaflet)
+library(here)
+library(plotly)
+library(glue)
+# I downloaded the data from this website and used the shp file 
+# https://public-nps.opendata.arcgis.com/datasets/nps::nps-boundary-4/explore?location=37.015375%2C-81.906543%2C6.00
+nps <- sf::read_sf("NPS_Land/nps_boundary.shp") |>
+  sf::st_transform('+proj=longlat +datum=WGS84')
+
+# data for joined map of just national parks with more information
+# created in CleaningData.qmd
+load("joined_map_data.rda")
+
+# Create labels that users see when clicking on a park 
+label_text <- glue(
+  "<b> Name: </b> {joined_clean$UNIT_NAME}<br/>",
+  "<b> Established: </b> {joined_clean$Established}<br/>",
+  "<b> Visitors in 2022: </b> {joined_clean$Visitors_2022}<br/>",
+  "<b> Description: </b> {joined_clean$Description}<br/>") |>
+  lapply(htmltools::HTML)
+
+# table stuff
+library(DT)
+
+load("joined_display.rda")
+small_table <- head(joined_display,5) |>
+  st_drop_geometry()
+
+
+library("httr")
+library("readxl")
+library(scales)
+library(plotly)
+options(scipen = 999)
+GET("https://query.data.world/s/fr5k6pcrcweo7wr657vchbeq6f3cci?dws=00000", write_disk(tf <- tempfile(fileext = ".xlsx")))
+df <- read_excel(tf)
+np_visitors <- df |> 
+  rename(Year = YearRaw) |> 
+  rename(Type = `Unit Type`) |> 
+  rename(Name = `Unit Name`) |>
+  filter(Type == "National Park") |>
+  filter(Year != "Total") |>
+  filter(Year >= 1995 & Year <= 2016) 
+plot_parks <- unique(np_visitors$Name) |> 
+  sort()
+```
+
+```{r}
+#| echo: false
+leaflet(nps) |>
+  setView(lng = -110, lat = 39.833, zoom = 2.5) |>
+  addTiles() |>
+  addProviderTiles(providers$OpenStreetMap.Mapnik) |>
+  addPolygons(color = "#006400",
+              weight = 1.5,
+              smoothFactor = .5,
+              opacity = 1.0, 
+              fillOpacity = 0.5,
+              highlightOptions = highlightOptions(color = "#003b00", weight = 2,
+      bringToFront = TRUE),
+              label = joined_clean$UNIT_NAME,
+              popup = label_text,
+              data = joined_clean)
+```
+
+
+
+**Data table**
+
+
+The map is accompanied by a data table that provides more information on the areas a user is interested in. Here is a small sample, just using Acadia National Park, of the table that appears for those looking for more information about the true national parks. The data tables provide a lot more information about the areas that appear on the map and can be used to answer many of the questions posed in this app.  
+
+
+
+```{r}
+#| echo: false
+datatable(small_table)
+```
+
+
+**Visitors Line Plot**
+
+
+This is the more interesting plot regarding the amount of visitors in each park. This version shows all of the parks and is a little cluttered and overwhelming. In the shiny app, the graph appears blank and the user must select the parks they want to view before any thing appears. As soon as one park is selected it populates on the graph and users can select as many national parks to view as they want. 
+
+```{r}
+#| echo: false
+#| 
+v_plot <- ggplot(data = np_visitors, aes(x = Year, y = Visitors, group = Name,
+                                             label = Name,
+                                             label2 = Year,
+                                             label3 = Visitors)) +
+      geom_line(aes(color = Name), show.legend = FALSE) +
+      scale_color_viridis_d() +
+      scale_y_continuous(labels = scales::comma) +
+      labs(title = "Visitors in National Parks from 1995 to 2016") +
+      theme(legend.position = "none")
+    ggplotly(v_plot, tooltip = c("label", "label2", "label3"))
+```
+
+
+**The visualizations are more interactive on the siny app, linked below**
+<https://denali01.shinyapps.io/final_app/>
+
 
 # Conclusion
-
+After finishing the project and looking back at what I've done, I probably would have chosen a similar way to do this project without using such a large shape file and finding a source I could gather all the data I used in a more uniform manner. The large size of the shape file led to a lot of issues with rendering, publishing, and sharing it. This was discouraging because I spent so much time on it but the full version will only run on my computer and can't be displayed on an app or rendered file. I also would have liked to clean up the app a little more if I had more time to devote to it. I think it could still be cleaner and probably better organized if I dedicated more time towards it. If I continue to work on this app, which I kind of want to just to see how far I can take it, I would do all the cleaning I could manage and I want to add in a tab linking to Google trends to show a real time interest in these areas. 
