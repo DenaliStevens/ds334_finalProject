@@ -6,11 +6,11 @@ format: html
 
 # Abtract
 
-This project pulls from a few different files all regarding information about national parks in the United States that I used to create a shiny app with the purpose of providing a very basic education about national parks. To build the map I used a shape file from the national park service to plot all the areas that they manage. This not only includes those with the national park title, but also every designation of a national part site (which is quite an extensive list). To add onto the map, I scraped the National Parks Wikipedia page to get some extra information about the true National Parks so users could see some more information when they clicked on a chosen park. In addition to the map, there are data tables that list out relevant information for the National Parks and other areas featured on the map. I also used more data provided by the National Parks Service to plot information regarding the amount of visitors to each of the national parks over a range of years. This data was used to create a couple of graphs displaying visitor trends in national parks. 
+This project pulls from a few different files all regarding information about national parks in the United States that I used to create a shiny app with the purpose of providing a very basic education about national parks. To build the map I used a shape file from the national park service to plot all the areas that they manage. This not only includes those with the national park title, but also every designation of a national part site (which is quite an extensive list). To add onto the map, I scraped the National Parks Wikipedia page to get some extra information about the true national parks so users could see some more information when they clicked on a chosen park. In addition to the map, there are data tables that list out relevant information for the national parks and other areas featured on the map. I also used more data provided by the National Parks Service to plot information regarding the amount of visitors to each of the national parks over a range of years. This data was used to create a couple of graphs displaying visitor trends in national parks. 
 
 # Introduction
 
-This app utilizes data and visualizations to offer an opportunity for expanding knowledge about our National Parks and delivering a fundamental education about them. 
+This app utilizes data and visualizations to offer an opportunity for expanding knowledge about our national parks and delivering a fundamental education about them. 
 
 **The map and data tables use the following information:**
 
@@ -30,7 +30,7 @@ To designate the areas with the "National Park" title and separate them for plot
 - *Visitors in 2022)*,  Shows the amount of visitors to each park in 2022. This appears in the popup window and can also be used to sort "Just_National_Parks" by amount of visitors. 
 - *Description*, A brief description of each park. This appears in the popup window and the data table "Just_National_Parks". 
 
-Creating the map boosts user interaction with information about national parks and creates an interesting visualization of these areas. It displays the size and geographic location of each area to help users get a better idea of where they are and how much space is covered by parks and other national sites in the country. The data tables provide a gathered place of information that allows for the posing of questions about the areas shown in the map. This is where the majority of questions and education about national parks takes place. The information from the Wikipedia page allows users to explore details of these areas like the oldest/newest park or the biggest/smallest park, and many more investigative questions. 
+Creating the map boosts user interaction with information about national parks and creates an interesting visualization of these areas. It displays the size and geographic location of each area to help users get a better idea of where they are and how much space is covered by parks and other national sites in the country. The data tables provide a gathered place of information that allows for the posing of questions about the areas shown in the map. This is where the majority of questions and education about national parks takes place. The information from the Wikipedia page allows users to explore details of these areas like the oldest/newest park or the biggest/smallest park, and many more investigative questions.
 
 **The visitors plots use the following information:**
 
@@ -93,15 +93,22 @@ library(plotly)
 options(scipen = 999)
 GET("https://query.data.world/s/fr5k6pcrcweo7wr657vchbeq6f3cci?dws=00000", write_disk(tf <- tempfile(fileext = ".xlsx")))
 df <- read_excel(tf)
-np_visitors <- df |> 
+top10_total <- df |> filter(YearRaw == "Total") |>
+  filter(`Unit Type` == "National Park") |>
+  arrange(YearRaw) |>
+  slice(1:10) |>
+  pull(`Unit Name`)
+
+top10_plot <- df |>
+  filter(`Unit Name` %in% top10_total)
+
+np_visitors <- top10_plot |> 
   rename(Year = YearRaw) |> 
   rename(Type = `Unit Type`) |> 
   rename(Name = `Unit Name`) |>
   filter(Type == "National Park") |>
   filter(Year != "Total") |>
   filter(Year >= 1995 & Year <= 2016) 
-plot_parks <- unique(np_visitors$Name) |> 
-  sort()
 ```
 
 ```{r}
@@ -140,11 +147,11 @@ datatable(small_table)
 **Visitors Line Plot**
 
 
-This is the more interesting plot regarding the amount of visitors in each park. This version shows all of the parks and is a little cluttered and overwhelming. In the shiny app, the graph appears blank and the user must select the parks they want to view before anything appears. As soon as one park is selected it populates on the graph and users can select as many national parks to view as they want. 
+This is the more interesting plot regarding the amount of visitors in each park. This version shows the ten parks with the highest total visitor count in the data set. In the shiny app, the graph appears blank and the user must select the parks they want to view before anything appears. As soon as one park is selected it populates on the graph and users can select as many national parks to view as they want. It also sets the year range they are viewing to 2000 through 2016, but the user can alter the range to cover any number of years from 1995 to 2016. 
 
 ```{r}
 #| echo: false
-#| 
+
 v_plot <- ggplot(data = np_visitors, aes(x = Year, y = Visitors, group = Name,
                                              label = Name,
                                              label2 = Year,
@@ -157,9 +164,57 @@ v_plot <- ggplot(data = np_visitors, aes(x = Year, y = Visitors, group = Name,
     ggplotly(v_plot, tooltip = c("label", "label2", "label3"))
 ```
 
+The other visitors graph is built to be more specific and shows a bar graph for a single park, allowing for the selection of any one park but it is set from 1995 to 2016 and doesn't allow the user to change it. This makes it easier to investigate one park at a time, but it is a more boring visual and requires less user input.
 
-**The visualizations are more interactive on the siny app, linked below**
+**The visualizations are more interactive on the shiny app, linked below**
 <https://denali01.shinyapps.io/final_app/>
+
+As mentioned earlier, the purpose of this project was to give a basic education about national parks. The visuals and data in the shiny app provide the information to gain that education and to help guide through this process I created a question sheet with some relevant questions to the data. This gives a starting point to the questions that can be answered using the app and the information that can be gained using it. Here's a brief example of the sheet to give an idea:
+
+#### Section 1
+Use the map and data tables to answer the following:
+
+1. What is the oldest national park and when was it established?
+```{r}
+#| code-fold: true
+
+# Yellowstone. It was established on March 1, 1872
+```
+
+2. What is the newest national park and when was it established?
+```{r}
+#| code-fold: true
+
+# White Sands. It was established on December 20, 2019
+```
+
+#### Section 2
+Use the collective visitors plot to answer the following:
+
+1. Select 3 of your favorite parks
+  a. Which one had the most visitors in 2000? How many did it have?
+  b. How about the most visitors in 2016? Is it the same park as part a?
+  
+#### Section 3
+
+Use the single park visitors plot to answer the following:
+
+1. Select Yellowstone National Park 
+  a. What year did Yellowstone record the most visitors in this time period?
+```{r}
+#| code-fold: true
+
+# In 2016, with 4,257,177 visitors 
+```
+  b. What year did it record the least visitors?
+```{r}
+#| code-fold: true
+
+# In 2001, with 2,758,526
+```
+  
+
+
 
 
 # Conclusion
